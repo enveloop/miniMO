@@ -286,15 +286,15 @@ void getMappedFreq(int range) {
   switch (range) {
     case 0:
       freqRangeMin = 1;
-      freqRangeMax = 200;
+      freqRangeMax = 100;
       break;
     case 1:
-      freqRangeMin = 200;
-      freqRangeMax = 1000;
+      freqRangeMin = 100;
+      freqRangeMax = 1500;
       break;
     case 2:
-      freqRangeMin = 1000;
-      freqRangeMax = 2000;
+      freqRangeMin = 1500;
+      freqRangeMax = 3000;
       break;
   }
 }
