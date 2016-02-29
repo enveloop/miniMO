@@ -4,11 +4,24 @@
 //* 2016 by enveloop *
 //********************
 //
-//Controls:
-//Potentiometer:  change frequency.
-//Single click:   change wave. LED flases once.
-//Double click:   change range. LED flashes twice.
-//Click and Hold: change volume (with potentiometer). LED flases constantly.
+   http://www.envelooponline.com/minimo
+   CC BY 4.0
+   Licensed under a Creative Commons Attribution 4.0 International license: 
+   http://creativecommons.org/licenses/by/4.0/
+//
+//Modes of Operation
+//Default: the knob modifies the frequency.
+//Single click: cycles through the available waves, from less to more harmonics.
+//  -After the saw wave comes a "silent wave", for when one wants to quickly silence the unit without changing the volume or turning it off.
+//  -After every click, the LED blinks once.
+//Double click: cycles through the frequency ranges.
+//  -After the double click, the LED blinks twice.
+//Click and hold: the knob modifies the amplitude.
+//  -Whilst in this mode, the LED blinks constantly.
+//  -As you change between frequency and amplitude, miniMO memorizes the place where you leave the knob for each parameter.
+//  -When you go back to modifying a parameter, miniMO won't respond until you reach the value where you left it earlier.
+//Input 1: connect an external source for frequency modulation.
+//Input 2: connect an external source for amplitude modulation.
 */
 
 #include <avr/io.h>
@@ -24,25 +37,22 @@ bool beenDoubleClicked = false;
 bool beenLongPressed = false;
 
 //freq control
-bool coarseFreqChange = false;
+bool coarseFreqChange = true;
 int freqRange;
 int freqRangeMin, freqRangeMax;
 
 //wave
 int currentWave;
 
-//volume cotrol
+//volume control
 bool coarseVolChange = false;
-
-//potentiometer's position
-int potPosRef;
 
 //output
 byte volumeRead;     //pin reading (potentiometer)
 byte volume;         //pin reading and external(ADC) modulation 
 int frequency;       //pin reading (potentiometer). The modulating signal doesn't go through the ATtiny
 
-//input smoothing
+//external input smoothing
 const int numReadings = 4;
 int readings[numReadings];      // the readings from the analog input
 int readIndex = 0;              // the index of the current reading
@@ -85,7 +95,7 @@ void setup() {
   //Timer Interrupt Generation -timer 0                                                          
   TCCR0A = (1<<WGM01) | (1<<WGM00);    // fast PWM
   TCCR0B = (1<<CS00);                  // no prescale
-  TIMSK = (1 << OCIE0A);               // Enable Interrupt
+  TIMSK = (1 << TOIE0);                // Enable Interrupt on overflow
   
   //Pin interrupt Generation
   GIMSK |= (1<<PCIE);                  // Enable Pin Change Interrupt 
@@ -106,7 +116,7 @@ void setup() {
 }
 
 
-ISR(TIMER0_COMPA_vect) {               //Timer 0 interruption - changes the width of timer 1's pulse to generate waves
+ISR(TIMER0_OVF_vect) {               //Timer 0 interruption - changes the width of timer 1's pulse to generate waves
   static byte sample;
   static unsigned int phase;
   OCR1B = sample;    
@@ -177,39 +187,41 @@ void checkButton() {
   }
 }
  
-//We want parameters to change only if we move the potentiometer after we return to controlling them
-//so we store the potentiometer's position in a global variable and check the current position against it; when it changes, we start controlling the parameter.
-//we want to make sure that the change is intentional(fairly big), so we use a coarse mapping for the reference value.
+//We want parameters to change only if we return to the vaue where we left them after controlling something else
+//so we store the potentiometer's position in a variable and check the current position against it; 
+//when we reach it, we start controlling the parameter again.
 
 void setVolume(int pin) {
+  static byte potPosVolRef;
   coarseFreqChange = false;   //reset the control condition for frequency
   if (coarseVolChange == false) {
-    int coarsevolRead = analogRead(pin) >> 7; //right shifting to get values between 0 and 7
-    if (coarsevolRead != potPosRef) {
+    byte coarsevolRead = analogRead(pin) >> 7; //right shifting to get values between 0 and 7
+    if (coarsevolRead == potPosVolRef) {
       coarseVolChange = true;
     }
   }
-  else if (coarseVolChange == true) {
+  if (coarseVolChange == true) {
     int tempRead = analogRead(pin);
     volumeRead = tempRead >> 2;                      //right shifting by 2 to get values between 0 and 255 (0-1023/2^2)
-    volume = (volumeRead * volumeModulation)>>8;
-    potPosRef = tempRead >> 7;                       ////save the potentiometer´s position as reference. Right shifting to get values between 0 and 7
+    volume = (volumeRead * volumeModulation) >> 8;
+    potPosVolRef = tempRead >> 7;                    //save the potentiometer´s position as reference. Right shifting to get values between 0 and 7
   }                                   
 }
 
 void setFrequency(int pin) {
-  coarseVolChange = false;                                //reset the control condition for volume
+  static byte potPosFreqRef;
+  coarseVolChange = false;                            //reset the control condition for volume
   if (coarseFreqChange == false) {
-    int coarsefreqRead = analogRead(pin) >> 7;
-    if (coarsefreqRead != potPosRef) {
+    byte coarsefreqRead = analogRead(pin) >> 2;
+    if (coarsefreqRead == potPosFreqRef) {
       coarseFreqChange = true;
     }
   }
-  else if (coarseFreqChange == true) {
+  if (coarseFreqChange == true) {
     int tempRead = analogRead(pin);
     byte freqRead = tempRead >> 2;
+    potPosFreqRef = freqRead;
     frequency = map(freqRead, 0, 255, freqRangeMin, freqRangeMax);
-    potPosRef = tempRead >> 7;
   }                            
 }
 
