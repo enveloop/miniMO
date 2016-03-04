@@ -9,19 +9,35 @@
    Licensed under a Creative Commons Attribution 4.0 International license: 
    http://creativecommons.org/licenses/by/4.0/
 //
-//Modes of Operation
-//Default: the knob modifies the frequency.
-//Single click: cycles through the available waves, from less to more harmonics.
-//  -After the saw wave comes a "silent wave", for when one wants to quickly silence the unit without changing the volume or turning it off.
-//  -After every click, the LED blinks once.
-//Double click: cycles through the frequency ranges.
-//  -After the double click, the LED blinks twice.
-//Click and hold: the knob modifies the amplitude.
-//  -Whilst in this mode, the LED blinks constantly.
-//  -As you change between frequency and amplitude, miniMO memorizes the place where you leave the knob for each parameter.
-//  -When you go back to modifying a parameter, miniMO won't respond until you reach the value where you left it earlier.
-//Input 1: connect an external source for frequency modulation.
-//Input 2: connect an external source for amplitude modulation.
+ MODES OF OPERATION
+  Default: the knob modifies the frequency.
+  Single click: cycles through the available waves, from less to more harmonics.
+    -After the saw wave comes a "silent wave", for when one wants to quickly silence the unit without changing the volume or turning it off.
+    -After every click, the LED blinks once.
+  Double click: cycles through the frequency ranges.
+    -After the double click, the LED blinks twice.
+  Triple click: Frequency calibration (see below)
+  Click and hold: the knob modifies the amplitude.
+    -While in this mode, the LED blinks constantly.
+    -As you change between frequency and amplitude, miniMO memorizes the place where you leave the knob for each parameter
+    -When you go back to modifying a parameter, miniMO won't respond until you reach the value where you left it earlier
+  Input 1: connect an external source for frequency modulation.
+  Input 2: connect an external source for amplitude modulation.
+  
+FREQUENCY CALIBRATION
+  Use this procedure to bring the frequency back to the usual ranges if an external source is connected
+    -Move the knob halfway
+    -Click the button three times
+    -The LED turns OFF
+       -Sweep the input through the maximum and minimum values
+       -Calibration finishes automatically if no new max or min values are registered for two seconds  
+    -The LED turns ON
+    -After recalibration, use the knob to fine tune the input  
+
+BATTERY CHECK
+  When you switch on the module,
+     -If the LED blinks twice, the battery is OK
+     -If the LED blinks fast many times, the battery should be replaced 
 */
 
 #include <avr/io.h>
@@ -35,11 +51,18 @@ int button_delay;
 int button_delay_b;
 bool beenDoubleClicked = false;
 bool beenLongPressed = false;
+int additionalClicks = 0;      //variable to see how many times we click after the first
 
 //freq control
 bool coarseFreqChange = true;
 int freqRange;
-int freqRangeMin, freqRangeMax;
+static int freqRangeMin, freqRangeMax;
+
+//freq calibration
+int sensorValue = 0;
+static int sensorMax = 1023;
+static int sensorMin = 0;
+bool calibrating = false;
 
 //wave
 int currentWave;
@@ -69,16 +92,19 @@ const char PROGMEM sinetable[128] = {
 unsigned char wavetable[256];
 
 void setup() {
-  //set pins
-  pinMode(4, OUTPUT); //timer 1 in digital output 4
-  pinMode(3, INPUT);  //analog- freq input
-  pinMode(2, INPUT);  //analog- amplitude input
-  pinMode(1, INPUT);  //digital input
+  //set LED pin and check the battery level
   pinMode(0, OUTPUT); //LED
+  checkVoltage();
+  ADMUX = 0;                      //reset multiplexer settings
+  
+  //set the rest of the pins
+  pinMode(4, OUTPUT); //timer 1 in digital output 4 - outs 1 and 2
+  pinMode(3, INPUT);  //analog- freq input (potentiometer plus external input 1)
+  pinMode(2, INPUT);  //analog- amplitude input (external input 2)
+  pinMode(1, INPUT);  //digital input (push button)
   
   //disable digital input in pins that do analog conversion
   DIDR0 = (1<<ADC2D)| (1<<ADC3D); 
-  
   //set clock source for PWM -datasheet p94
   PLLCSR |= (1<<PLLE);                 // Enable PLL (64 MHz)
   _delay_us(100);                      // Wait for a steady state
@@ -130,9 +156,35 @@ ISR(PCINT0_vect) {                       //PIN Interruption - has priority over 
 
 void loop() {  
   checkButton();
+  if (!calibrating){
   setFrequency(3);                                 //change frequency
   readExtInput(1);      
-  volume = (volumeRead * volumeModulation)>>8;     //modulate volume    
+  volume = (volumeRead * volumeModulation)>>8;     //modulate volume   
+  } 
+}
+
+void calibrate(){ 
+    calibrating = true;
+    TIMSK = (0 << TOIE0);
+    int firstRead = analogRead(3);
+    int delta = 0;
+    int sensorValue = 0;
+    sensorMax = 0;                              //reset the max value
+    sensorMin = 1023;                           //reset the min value
+    int noNewMinOrMax = 0;
+    while ( delta < 5){                        //do nothing until there is "movement"
+       sensorValue = analogRead(3);
+       delta = abs(sensorValue-firstRead);      
+    }      
+    while (noNewMinOrMax < 200){
+      sensorValue = analogRead(3);
+      if (sensorValue > sensorMax)sensorMax = sensorValue;       //input bigger than last - set new max
+      else if (sensorValue < sensorMin)sensorMin = sensorValue;  //input smaller than last - set new min
+      else noNewMinOrMax ++;                                  //input between min and max - nothing new    
+      _delay_ms(10);
+    }
+    calibrating = false;
+    TIMSK = (1 << TOIE0);
 }
 
 void checkButton() {
@@ -150,37 +202,57 @@ void checkButton() {
     if (button_delay > 0) {
       bool hold = true;
       while (hold) {
-        _delay_ms(1);
-        button_delay_b++;                           //fast counter to check if there's a second press
+        bool previousButtonState = inputButtonValue; //see if the button is pressed or not
         
-        if (button_delay_b == 100) {                
-          if (beenLongPressed) {                    //button released after being pressed for a while (most likely because we were changing the volume)
-            beenLongPressed = false;
-            button_delay = 0;
-            button_delay_b = 0;
-            hold = false;
-          }
-          else {                                    //button released (regular single click)
-            flashLEDOnce();
-            currentWave++;                           //change the wave
-	    if (currentWave >= 5) currentWave = 0;         
-	    writeWave(currentWave);     
-            button_delay = 0;
-            button_delay_b = 0;
-            hold = false;
-          }
-        }
+        _delay_ms(1);
        
-        else if (inputButtonValue == HIGH) {         //button pressed again (double click),         
-          flashLEDTwice();
-	  freqRange++;                               //change the frequency range 
-          if (freqRange >= 3) freqRange = 0; 
-          getMappedFreq(freqRange); 
-          coarseFreqChange = true ; 
-          button_delay = 0;
-          button_delay_b = 0;
-          beenDoubleClicked = true;
-          hold = false;
+        button_delay_b++;                                               //fast counter to check if there are more presses
+        if ((inputButtonValue == HIGH)&& (previousButtonState == 0)) {   
+          additionalClicks++;                                                     //if we press the button and we were not pressing it before, that counts as a click
+        }
+        
+        if (button_delay_b == 100) {
+          if (additionalClicks == 0){           
+            if (beenLongPressed) {                    //button released after being pressed for a while (most likely because we were changing the volume)
+              beenLongPressed = false;
+              button_delay = 0;
+              button_delay_b = 0;
+              additionalClicks = 0;
+              hold = false;
+            }
+            else {                                    //button released (regular single click)
+              flashLEDOnce();
+              currentWave++;                           //change the wave
+  	    if (currentWave >= 5) currentWave = 0;         
+  	    writeWave(currentWave);     
+              button_delay = 0;
+              button_delay_b = 0;
+              additionalClicks = 0;
+              hold = false;
+            }
+          }
+          else if (additionalClicks == 1) {             //button pressed again (double click),         
+            flashLEDTwice();
+  	    freqRange++;                               //change the frequency range 
+            if (freqRange >= 3) freqRange = 0; 
+            getMappedFreq(freqRange); 
+            coarseFreqChange = true ; 
+            button_delay = 0;
+            button_delay_b = 0;
+            additionalClicks = 0;
+            beenDoubleClicked = true;
+            hold = false;
+            }
+          else if (additionalClicks > 1 ) {                 //button pressed at least twice (triple click or more)
+            digitalWrite(0, LOW);
+            calibrate();
+            digitalWrite(0, HIGH);
+            button_delay = 0;
+            button_delay_b = 0;
+            additionalClicks = 0;
+            beenDoubleClicked = true;
+            hold = false;
+          }
         }
       }
     }
@@ -220,8 +292,8 @@ void setFrequency(int pin) {
   if (coarseFreqChange == true) {
     int tempRead = analogRead(pin);
     byte freqRead = tempRead >> 2;
-    potPosFreqRef = freqRead;
-    frequency = map(freqRead, 0, 255, freqRangeMin, freqRangeMax);
+    potPosFreqRef = freqRead; 
+    frequency = map(tempRead, sensorMin, sensorMax, freqRangeMin, freqRangeMax); //map the calibrated values (by default 0-1023) to the frequency range we want
   }                            
 }
 
@@ -298,15 +370,15 @@ void getMappedFreq(int range) {
   switch (range) {
     case 0:
       freqRangeMin = 1;
-      freqRangeMax = 100;
+      freqRangeMax = 114;  //A1
       break;
     case 1:
-      freqRangeMin = 100;
-      freqRangeMax = 1500;
+      freqRangeMin = 114;  
+      freqRangeMax = 1830; //A5
       break;
     case 2:
-      freqRangeMin = 1500;
-      freqRangeMax = 3000;
+      freqRangeMin = 1830;
+      freqRangeMax = 3660; //A6
       break;
   }
 }
@@ -326,5 +398,27 @@ void flashLEDTwice () {
   _delay_ms(20);
   digitalWrite(0, HIGH);
 }
+
+void checkVoltage(){ //voltage from 255 to 0; 46 is (approx)5v, 94 is 2.8, 104-106 is 2.5 
   
-  
+  ADMUX |= (1<<ADLAR);                  //Left adjust result (8 bit conversion stored in ADCH)
+  ADMUX |= (1<<MUX3)|(1<<MUX2);         //1.1v input
+  delay(250);                           // Wait for Vref to settle
+  ADCSRA |= (1<<ADSC);                  // Start conversion
+  while (bit_is_set(ADCSRA,ADSC));      // wait while measuring
+  if (ADCH > 103)                       //aprox 2.6
+    flashLED(8,200);
+  else 
+    flashLED(2, 500);
+}
+
+void flashLED (int times, int gap) {     //for voltage check (uses regular delay)
+  //delay(250);
+  for (int i=0; i<times; i++)
+  {
+    digitalWrite(0, HIGH);                 
+    delay(gap);
+    digitalWrite(0, LOW);
+    delay(gap);
+  }
+} 
