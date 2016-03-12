@@ -21,6 +21,7 @@
     -While in this mode, the LED blinks constantly
     -When you change between frequency and amplitude, miniMO memorizes the place where you leave the knob for each parameter
     -When you go back to modifying a parameter, miniMO won't respond until you reach the value where you left it earlier
+    
   Input 1: connect an external source for frequency modulation
   Input 2: connect an external source for amplitude modulation
 
@@ -35,7 +36,7 @@ FREQUENCY CALIBRATION
   miniMO automatically saves the new values to memory after calibration and recalls them if it is turned OFF and ON again
 
 BATTERY CHECK
-  When you switch on the module,
+  When you switch the module ON,
      -If the LED blinks once, the battery is OK
      -If the LED blinks fast several times, the battery is running low
 */
@@ -430,3 +431,4 @@ void flashLED (int times, int gap) {     //for voltage check (uses regular delay
     delay(gap);
   }
 }
+
