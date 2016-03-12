@@ -6,41 +6,42 @@
 //
    http://www.envelooponline.com/minimo
    CC BY 4.0
-   Licensed under a Creative Commons Attribution 4.0 International license: 
+   Licensed under a Creative Commons Attribution 4.0 International license:
    http://creativecommons.org/licenses/by/4.0/
 //
  MODES OF OPERATION
   Default: the knob modifies the frequency.
   Single click: cycles through the available waves, from less to more harmonics.
     -After the saw wave comes a "silent wave", for when one wants to quickly silence the unit without changing the volume or turning it off.
-    -After every click, the LED blinks once.
-  Double click: cycles through the frequency ranges.
-    -After the double click, the LED blinks twice.
+    -After every click, the LED blinks once
+  Double click: cycles through the frequency ranges
+    -After the double click, the LED blinks twice
   Triple click: Frequency calibration (see below)
-  Click and hold: the knob modifies the amplitude.
-    -While in this mode, the LED blinks constantly.
-    -As you change between frequency and amplitude, miniMO memorizes the place where you leave the knob for each parameter
+  Click and hold: the knob modifies the amplitude
+    -While in this mode, the LED blinks constantly
+    -When you change between frequency and amplitude, miniMO memorizes the place where you leave the knob for each parameter
     -When you go back to modifying a parameter, miniMO won't respond until you reach the value where you left it earlier
-  Input 1: connect an external source for frequency modulation.
-  Input 2: connect an external source for amplitude modulation.
-  
+  Input 1: connect an external source for frequency modulation
+  Input 2: connect an external source for amplitude modulation
+
 FREQUENCY CALIBRATION
-  Use this procedure to bring the frequency back to the usual ranges if an external source is connected
-    -Move the knob halfway
+  Use this procedure to bring the frequency back to the usual ranges if you connect (or disconnect) an external source
+    -If you are connecting a miniMO sequencer: move the knob all the way down
     -Click the button three times
     -The LED turns OFF
        -Sweep the input through the maximum and minimum values
-       -Calibration finishes automatically if no new max or min values are registered for two seconds  
+       -Calibration finishes automatically if no new max or min values are registered for two seconds
     -The LED turns ON
-    -After recalibration, use the knob to fine tune the input  
+  miniMO automatically saves the new values to memory after calibration and recalls them if it is turned OFF and ON again
 
 BATTERY CHECK
   When you switch on the module,
-     -If the LED blinks twice, the battery is OK
-     -If the LED blinks fast many times, the battery should be replaced 
+     -If the LED blinks once, the battery is OK
+     -If the LED blinks fast several times, the battery is running low
 */
 
 #include <avr/io.h>
+#include <avr/eeprom.h>
 #include <util/delay.h>
 
 //button interrupt
@@ -54,26 +55,28 @@ bool beenLongPressed = false;
 int additionalClicks = 0;      //variable to see how many times we click after the first
 
 //freq control
-bool coarseFreqChange = true;
+bool coarseFreqChange = false;
+byte potPosFreqRef = 255;      //max
 int freqRange;
-static int freqRangeMin, freqRangeMax;
+int freqRangeMin, freqRangeMax;
 
 //freq calibration
 int sensorValue = 0;
-static int sensorMax = 1023;
-static int sensorMin = 0;
+int sensorMax;
+int sensorMin;
 bool calibrating = false;
+
+//volume control
+bool coarseVolChange = false;
+byte potPosVolRef = 7;          //max
 
 //wave
 int currentWave;
 
-//volume control
-bool coarseVolChange = false;
-
 //output
-byte volumeRead;     //pin reading (potentiometer)
-byte volume;         //pin reading and external(ADC) modulation 
-int frequency;       //pin reading (potentiometer). The modulating signal doesn't go through the ATtiny
+byte volumeRead;     //pin reading (knob)
+byte volume;         //pin reading and external modulation
+int frequency;       //pin reading (knob and external modulation). It's only one variable because the knob and external input share the input pint
 
 //external input smoothing
 const int numReadings = 4;
@@ -96,103 +99,110 @@ void setup() {
   pinMode(0, OUTPUT); //LED
   checkVoltage();
   ADMUX = 0;                      //reset multiplexer settings
-  
+
+  //read calibrated values for freq input
+  sensorMin = eeprom_read_word((uint16_t*)1);
+  sensorMax = eeprom_read_word((uint16_t*)3);
+  if (sensorMax == 0) sensorMax = 1023; //if there was no data in memory, give it the default value
+
   //set the rest of the pins
   pinMode(4, OUTPUT); //timer 1 in digital output 4 - outs 1 and 2
-  pinMode(3, INPUT);  //analog- freq input (potentiometer plus external input 1)
+  pinMode(3, INPUT);  //analog- freq input (knob plus external input 1)
   pinMode(2, INPUT);  //analog- amplitude input (external input 2)
   pinMode(1, INPUT);  //digital input (push button)
-  
+
   //disable digital input in pins that do analog conversion
-  DIDR0 = (1<<ADC2D)| (1<<ADC3D); 
+  DIDR0 = (1 << ADC1D) | (1 << ADC2D) | (1 << ADC3D);
+
   //set clock source for PWM -datasheet p94
-  PLLCSR |= (1<<PLLE);                 // Enable PLL (64 MHz)
+  PLLCSR |= (1 << PLLE);               // Enable PLL (64 MHz)
   _delay_us(100);                      // Wait for a steady state
-  while (!(PLLCSR & (1<<PLOCK)));      // Ensure PLL lock
-  PLLCSR |= (1<<PCKE);                 // Enable PLL as clock source for timer 1
+  while (!(PLLCSR & (1 << PLOCK)));    // Ensure PLL lock
+  PLLCSR |= (1 << PCKE);               // Enable PLL as clock source for timer 1
 
   TIMSK  = 0;                          // Timer interrupts OFF
-  
-  //PWM Generation -timer 1
-  GTCCR  = (1<<PWM1B)| (1<<COM1B1);    // PWM, output on pb1, compare with OCR1B (see interrupt below), reset on match with OCR1C 
-  OCR1C  = 0xff;
-  TCCR1  = (1<<CS10);                  // no prescale
 
-  //Timer Interrupt Generation -timer 0                                                          
-  TCCR0A = (1<<WGM01) | (1<<WGM00);    // fast PWM
-  TCCR0B = (1<<CS00);                  // no prescale
+  //PWM Generation -timer 1
+  GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb1, compare with OCR1B (see interrupt below), reset on match with OCR1C
+  OCR1C  = 0xff;
+  TCCR1  = (1 << CS10);                // no prescale
+
+  //Timer Interrupt Generation -timer 0
+  TCCR0A = (1 << WGM01) | (1 << WGM00); // fast PWM
+  TCCR0B = (1 << CS00);                // no prescale
   TIMSK = (1 << TOIE0);                // Enable Interrupt on overflow
-  
+
   //Pin interrupt Generation
-  GIMSK |= (1<<PCIE);                  // Enable Pin Change Interrupt 
-  PCMSK |= (1<<PCINT1);                // on pin 01 
-  
+  GIMSK |= (1 << PCIE);                // Enable Pin Change Interrupt
+  PCMSK |= (1 << PCINT1);              // on pin 01
+
   sei();                               // Timer interrupts ON
-  
+
   //default frequency and volume
   freqRange = 1;
   getMappedFreq(1);
-  frequency = 800 ;
+  frequency = 1830;
   volumeRead = 255;
   volumeModulation = 255;
-  
+
   //go for it!
   digitalWrite(0, HIGH);               // turn LED on
   writeWave(0);                        // write a sine wave to the table
 }
 
-
 ISR(TIMER0_OVF_vect) {               //Timer 0 interruption - changes the width of timer 1's pulse to generate waves
   static byte sample;
   static unsigned int phase;
-  OCR1B = sample;    
-  sample  = ((wavetable[phase >> 8]*volume)>>8);
+  OCR1B = sample;
+  sample  = ((wavetable[phase >> 8] * volume) >> 8);
   phase += frequency;                                 //phase accumulator
 }
 
 ISR(PCINT0_vect) {                       //PIN Interruption - has priority over COMPA; this ensures that the switch will work
-   inputButtonValue = digitalRead(1);
+  inputButtonValue = digitalRead(1);
 }
 
-void loop() {  
+void loop() {
   checkButton();
-  if (!calibrating){
-  setFrequency(3);                                 //change frequency
-  readExtInput(1);      
-  volume = (volumeRead * volumeModulation)>>8;     //modulate volume   
-  } 
+  if (!calibrating) {
+    setFrequency(3);                                 //change frequency 
+    readExtInput(1);                                 //read analog input 1 (attiny PB2)
+    volume = (volumeRead * volumeModulation) >> 8;   //modulate volume
+  }
 }
 
-void calibrate(){ 
-    calibrating = true;
-    TIMSK = (0 << TOIE0);
-    int firstRead = analogRead(3);
-    int delta = 0;
-    int sensorValue = 0;
-    sensorMax = 0;                              //reset the max value
-    sensorMin = 1023;                           //reset the min value
-    int noNewMinOrMax = 0;
-    while ( delta < 5){                        //do nothing until there is "movement"
-       sensorValue = analogRead(3);
-       delta = abs(sensorValue-firstRead);      
-    }      
-    while (noNewMinOrMax < 200){
-      sensorValue = analogRead(3);
-      if (sensorValue > sensorMax)sensorMax = sensorValue;       //input bigger than last - set new max
-      else if (sensorValue < sensorMin)sensorMin = sensorValue;  //input smaller than last - set new min
-      else noNewMinOrMax ++;                                  //input between min and max - nothing new    
-      _delay_ms(10);
-    }
-    calibrating = false;
-    TIMSK = (1 << TOIE0);
+void calibrate() {
+  calibrating = true;
+  TIMSK = (0 << TOIE0);
+  int firstRead = analogRead(3);
+  int delta = 0;
+  int sensorValue = 0;
+  sensorMax = 0;                              //reset the max value
+  sensorMin = 1023;                           //reset the min value
+  int noNewMinOrMax = 0;
+  while ( delta < 5) {                       //do nothing until there is "movement"
+    sensorValue = analogRead(3);
+    delta = abs(sensorValue - firstRead);
+  }
+  while (noNewMinOrMax < 200) {
+    sensorValue = analogRead(3);
+    if (sensorValue > sensorMax)sensorMax = sensorValue;       //input bigger than last - set new max
+    else if (sensorValue < sensorMin)sensorMin = sensorValue;  //input smaller than last - set new min
+    else noNewMinOrMax ++;                                  //input between min and max - nothing new
+    _delay_ms(10);
+  }
+  eeprom_update_word((uint16_t*)1, sensorMin);
+  eeprom_update_word((uint16_t*)3, sensorMax);
+  calibrating = false;
+  TIMSK = (1 << TOIE0);
 }
 
 void checkButton() {
   while (inputButtonValue == HIGH) {
     button_delay++;
     _delay_ms(10);
-    if (button_delay > 10 &! beenDoubleClicked) {
-      beenLongPressed = true;                      //press and hold 
+    if (button_delay > 10 & ! beenDoubleClicked) {
+      beenLongPressed = true;                      //press and hold
       flashLEDOnce();
       setVolume(3);                                //change the volume
     }
@@ -203,16 +213,16 @@ void checkButton() {
       bool hold = true;
       while (hold) {
         bool previousButtonState = inputButtonValue; //see if the button is pressed or not
-        
+
         _delay_ms(1);
-       
+
         button_delay_b++;                                               //fast counter to check if there are more presses
-        if ((inputButtonValue == HIGH)&& (previousButtonState == 0)) {   
+        if ((inputButtonValue == HIGH) && (previousButtonState == 0)) {
           additionalClicks++;                                                     //if we press the button and we were not pressing it before, that counts as a click
         }
-        
+
         if (button_delay_b == 100) {
-          if (additionalClicks == 0){           
+          if (additionalClicks == 0) {
             if (beenLongPressed) {                    //button released after being pressed for a while (most likely because we were changing the volume)
               beenLongPressed = false;
               button_delay = 0;
@@ -223,26 +233,26 @@ void checkButton() {
             else {                                    //button released (regular single click)
               flashLEDOnce();
               currentWave++;                           //change the wave
-  	    if (currentWave >= 5) currentWave = 0;         
-  	    writeWave(currentWave);     
+              if (currentWave >= 5) currentWave = 0;
+              writeWave(currentWave);
               button_delay = 0;
               button_delay_b = 0;
               additionalClicks = 0;
               hold = false;
             }
           }
-          else if (additionalClicks == 1) {             //button pressed again (double click),         
+          else if (additionalClicks == 1) {             //button pressed again (double click),
             flashLEDTwice();
-  	    freqRange++;                               //change the frequency range 
-            if (freqRange >= 3) freqRange = 0; 
-            getMappedFreq(freqRange); 
-            coarseFreqChange = true ; 
+            freqRange++;                               //change the frequency range
+            if (freqRange >= 3) freqRange = 0;
+            getMappedFreq(freqRange);
+            coarseFreqChange = true ;
             button_delay = 0;
             button_delay_b = 0;
             additionalClicks = 0;
             beenDoubleClicked = true;
             hold = false;
-            }
+          }
           else if (additionalClicks > 1 ) {                 //button pressed at least twice (triple click or more)
             digitalWrite(0, LOW);
             calibrate();
@@ -258,13 +268,12 @@ void checkButton() {
     }
   }
 }
- 
+
 //We want parameters to change only if we return to the vaue where we left them after controlling something else
-//so we store the potentiometer's position in a variable and check the current position against it; 
+//so we store the knob's position in a variable and check the current position against it;
 //when we reach it, we start controlling the parameter again.
 
 void setVolume(int pin) {
-  static byte potPosVolRef;
   coarseFreqChange = false;   //reset the control condition for frequency
   if (coarseVolChange == false) {
     byte coarsevolRead = analogRead(pin) >> 7; //right shifting to get values between 0 and 7
@@ -276,12 +285,11 @@ void setVolume(int pin) {
     int tempRead = analogRead(pin);
     volumeRead = tempRead >> 2;                      //right shifting by 2 to get values between 0 and 255 (0-1023/2^2)
     volume = (volumeRead * volumeModulation) >> 8;
-    potPosVolRef = tempRead >> 7;                    //save the potentiometer´s position as reference. Right shifting to get values between 0 and 7
-  }                                   
+    potPosVolRef = tempRead >> 7;                    //save the knob´s position for reference. Right shifting to get values between 0 and 7 (max resolution that works with the button pressed)
+  }
 }
 
 void setFrequency(int pin) {
-  static byte potPosFreqRef;
   coarseVolChange = false;                            //reset the control condition for volume
   if (coarseFreqChange == false) {
     byte coarsefreqRead = analogRead(pin) >> 2;
@@ -292,15 +300,15 @@ void setFrequency(int pin) {
   if (coarseFreqChange == true) {
     int tempRead = analogRead(pin);
     byte freqRead = tempRead >> 2;
-    potPosFreqRef = freqRead; 
+    potPosFreqRef = freqRead;
     frequency = map(tempRead, sensorMin, sensorMax, freqRangeMin, freqRangeMax); //map the calibrated values (by default 0-1023) to the frequency range we want
-  }                            
+  }
 }
 
-void writeWave(int wave) {                    
+void writeWave(int wave) {
   switch (wave) {
     case 0:
-      sineWave();    
+      sineWave();
       break;
     case 1:
       triangleWave();
@@ -321,7 +329,7 @@ void writeWave(int wave) {
 //functions to populate the wavetable
 void sineWave() {                                       //too costly to calculate on the fly, so it reads from the sine table. We use 128 values, then mirror them to get the whole cycle
   for (int i = 0; i < 128; ++i) {
-    wavetable[i] = pgm_read_byte_near(sinetable + i); 
+    wavetable[i] = pgm_read_byte_near(sinetable + i);
   }
   wavetable[128] = 255;
   for (int i = 129; i < 255; ++i) {
@@ -363,17 +371,17 @@ int readExtInput(const byte pin) {  //with averaging
   total = total + readings[readIndex];
   readIndex = readIndex + 1;
   if (readIndex >= numReadings) readIndex = 0;
-  volumeModulation = total / numReadings;                    
+  volumeModulation = total / numReadings;
 }
 
-void getMappedFreq(int range) {                               
+void getMappedFreq(int range) {
   switch (range) {
     case 0:
       freqRangeMin = 1;
       freqRangeMax = 114;  //A1
       break;
     case 1:
-      freqRangeMin = 114;  
+      freqRangeMin = 114;
       freqRangeMax = 1830; //A5
       break;
     case 2:
@@ -384,41 +392,41 @@ void getMappedFreq(int range) {
 }
 
 void flashLEDOnce () {
-  digitalWrite(0, LOW);                  
+  digitalWrite(0, LOW);
   _delay_ms(20);
   digitalWrite(0, HIGH);
 }
 
 void flashLEDTwice () {
-  digitalWrite(0, LOW);                 
+  digitalWrite(0, LOW);
   _delay_ms(20);
   digitalWrite(0, HIGH);
   _delay_ms(20);
-  digitalWrite(0, LOW); 
+  digitalWrite(0, LOW);
   _delay_ms(20);
   digitalWrite(0, HIGH);
 }
 
-void checkVoltage(){ //voltage from 255 to 0; 46 is (approx)5v, 94 is 2.8, 104-106 is 2.5 
-  
-  ADMUX |= (1<<ADLAR);                  //Left adjust result (8 bit conversion stored in ADCH)
-  ADMUX |= (1<<MUX3)|(1<<MUX2);         //1.1v input
+void checkVoltage() { //voltage from 255 to 0; 46 is (approx)5v, 94 is 2.8, 104-106 is 2.5
+
+  ADMUX |= (1 << ADLAR);                //Left adjust result (8 bit conversion stored in ADCH)
+  ADMUX |= (1 << MUX3) | (1 << MUX2);   //1.1v input
   delay(250);                           // Wait for Vref to settle
-  ADCSRA |= (1<<ADSC);                  // Start conversion
-  while (bit_is_set(ADCSRA,ADSC));      // wait while measuring
+  ADCSRA |= (1 << ADSC);                // Start conversion
+  while (bit_is_set(ADCSRA, ADSC));     // wait while measuring
   if (ADCH > 103)                       //aprox 2.6
-    flashLED(8,200);
-  else 
-    flashLED(2, 500);
+    flashLED(8, 100);
+  else
+    flashLED(1, 250);
 }
 
 void flashLED (int times, int gap) {     //for voltage check (uses regular delay)
   //delay(250);
-  for (int i=0; i<times; i++)
+  for (int i = 0; i < times; i++)
   {
-    digitalWrite(0, HIGH);                 
+    digitalWrite(0, HIGH);
     delay(gap);
     digitalWrite(0, LOW);
     delay(gap);
   }
-} 
+}
