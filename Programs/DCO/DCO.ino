@@ -56,7 +56,7 @@ bool beenLongPressed = false;
 int additionalClicks = 0;      //variable to see how many times we click after the first
 
 //freq control
-bool coarseFreqChange = false;
+bool coarseFreqChange = true;  //allow to change frequency on power up
 byte potPosFreqRef = 255;      //max
 int freqRange;
 int freqRangeMin, freqRangeMax;
@@ -431,4 +431,3 @@ void flashLED (int times, int gap) {     //for voltage check (uses regular delay
     delay(gap);
   }
 }
-
