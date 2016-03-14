@@ -95,7 +95,7 @@ void setup()
 
   //Timer Interrupt Generation -timer 0
   TCCR0A = (1 << WGM01);               //Clear Timer on Compare (CTC) with OCR0A
-  TCCR0B = (1 << CS01) | (1 << CS00)  ;               // prescaled by 256
+  TCCR0B = (1 << CS01) | (1 << CS00);  // prescaled by 64
   OCR0A = 125;                         //1000hz - 1000 ticks per second https://www.easycalculation.com/engineering/electrical/avr-timer-calculator.php
   TIMSK = (1 << OCIE0A);               // Enable Interrupt on compare with OCR0A
   
