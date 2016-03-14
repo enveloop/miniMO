@@ -27,13 +27,15 @@
 
 FREQUENCY CALIBRATION
   Use this procedure to bring the frequency back to the usual ranges if you connect (or disconnect) an external source
-    -If you are connecting a miniMO sequencer: move the knob all the way down
+    -If you are connecting a miniMO sequencer: 
+        -Move the knob all the way down
+        -Set the middle frequency range
     -Click the button three times
     -The LED turns OFF
        -Sweep the input through the maximum and minimum values
        -Calibration finishes automatically if no new max or min values are registered for two seconds
     -The LED turns ON
-  miniMO automatically saves the new values to memory after calibration and recalls them if it is turned OFF and ON again
+  miniMO automatically saves the calibrated values to memory and recalls them if it is turned OFF and ON again
 
 BATTERY CHECK
   When you switch the module ON,
@@ -135,7 +137,7 @@ void setup() {
 
   //Pin interrupt Generation
   GIMSK |= (1 << PCIE);                // Enable Pin Change Interrupt
-  PCMSK |= (1 << PCINT1);              // on pin 01
+  PCMSK |= (1 << PCINT1);              // on pin 1
 
   sei();                               // Timer interrupts ON
 
@@ -147,7 +149,7 @@ void setup() {
   volumeModulation = 255;
 
   //go for it!
-  digitalWrite(0, HIGH);               // turn LED on
+  digitalWrite(0, HIGH);               // turn LED ON
   writeWave(0);                        // write a sine wave to the table
 }
 
@@ -415,14 +417,13 @@ void checkVoltage() { //voltage from 255 to 0; 46 is (approx)5v, 94 is 2.8, 104-
   delay(250);                           // Wait for Vref to settle
   ADCSRA |= (1 << ADSC);                // Start conversion
   while (bit_is_set(ADCSRA, ADSC));     // wait while measuring
-  if (ADCH > 103)                       //aprox 2.6
+  if (ADCH > 103)                       //approx 2.6
     flashLED(8, 100);
   else
     flashLED(1, 250);
 }
 
-void flashLED (int times, int gap) {     //for voltage check (uses regular delay)
-  //delay(250);
+void flashLED (int times, int gap) {     //for voltage check only (uses regular delay)
   for (int i = 0; i < times; i++)
   {
     digitalWrite(0, HIGH);
