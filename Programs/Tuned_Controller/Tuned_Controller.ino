@@ -9,11 +9,11 @@
    Licensed under a Creative Commons Attribution 4.0 International license:
    http://creativecommons.org/licenses/by/4.0/
 //
- IMPORTANT: this program uses the input 2 (marked in the module) as a digital output
+ IMPORTANT: this program uses the input 2 (as marked in the module) as a digital output
  
  MODES OF OPERATION
-  Default: the knob modifies the frequency.
-  Single click: toggles between note ON and OFF.
+  Default: the knob modifies the frequency
+  Single click: toggles between note ON and OFF
     -If the note is ON, the LED is also ON (and the other way round)
   Double click: Frequency calibration with OSC module(see below)
   Triple click: Frequency calibration with OSC module(see below)
@@ -30,10 +30,10 @@ FREQUENCY CALIBRATION (With an OSC Module)
     -Move the knob halfway 
     -Initiate the calibration procedure in the OSC module    
     -Click the button two or three times to initiate the calibration procedure in the sequencer
-      -A series of high and low beeps are heard; this calibrates the OSC
-      -A rising scale is heard; this calibrates the controller
-    -When the scale stops rising, disconnect the cables in input 1 to finish calibration
-  miniMO automatically saves the calibrated values to memory and recalls them if it is turned OFF and ON again 
+      -A series of high and low beeps are heard; this calibrates the OSC module
+      -A rising pitch is heard; this calibrates the Controller module
+    -When the pitch stops rising, disconnect the cables in input 1 to finish calibration
+  miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again 
 
 BATTERY CHECK
   When you switch the module ON,
