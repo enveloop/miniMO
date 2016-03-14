@@ -12,30 +12,30 @@
  MODES OF OPERATION
   Default: the knob modifies the frequency.
   Single click: cycles through the available waves, from less to more harmonics.
-    -After the saw wave comes a "silent wave", for when one wants to quickly silence the unit without changing the volume or turning it off.
-    -After every click, the LED blinks once
+    -After the saw wave there is a "silent wave" that mutes the output (stored volume remains unaffected)
+    -After a single click, the LED blinks once
   Double click: cycles through the frequency ranges
-    -After the double click, the LED blinks twice
+    -After a double click, the LED blinks twice
   Triple click: Frequency calibration (see below)
   Click and hold: the knob modifies the amplitude
     -While in this mode, the LED blinks constantly
     -When you change between frequency and amplitude, miniMO memorizes the place where you leave the knob for each parameter
-    -When you go back to modifying a parameter, miniMO won't respond until you reach the value where you left it earlier
+    -When you go back to modifying a parameter, miniMO waits until you reach the value where you left it earlier
     
   Input 1: connect an external source for frequency modulation
   Input 2: connect an external source for amplitude modulation
 
 FREQUENCY CALIBRATION
   Use this procedure to bring the frequency back to the usual ranges if you connect (or disconnect) an external source
-    -If you are connecting a miniMO sequencer: 
+    -If you are connecting a miniMO sequencer or tuned controller: 
         -Move the knob all the way down
-        -Set the middle frequency range
+        -Set the frequency range to the middle
     -Click the button three times
-    -The LED turns OFF
-       -Sweep the input through the maximum and minimum values
-       -Calibration finishes automatically if no new max or min values are registered for two seconds
-    -The LED turns ON
-  miniMO automatically saves the calibrated values to memory and recalls them if it is turned OFF and ON again
+        -The LED turns OFF
+    -Sweep the input through the maximum and minimum values
+    -Calibration finishes automatically if no new max or min values are registered for two seconds
+        -The LED turns ON
+  miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again
 
 BATTERY CHECK
   When you switch the module ON,
