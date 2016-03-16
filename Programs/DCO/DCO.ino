@@ -98,6 +98,9 @@ const char PROGMEM sinetable[128] = {
 unsigned char wavetable[256];
 
 void setup() {
+  //disable USI to save power as we are not using it
+  PRR = 1<<PRUSI;
+  
   //set LED pin and check the battery level
   pinMode(0, OUTPUT); //LED
   checkVoltage();
@@ -117,9 +120,6 @@ void setup() {
   //disable digital input in pins that do analog conversion
   DIDR0 = (1 << ADC1D) | (1 << ADC2D) | (1 << ADC3D);
   
-  //disable USI to save power as we are not using it
-  PRR = 1<<PRUSI;
-
   //set clock source for PWM -datasheet p94
   PLLCSR |= (1 << PLLE);               // Enable PLL (64 MHz)
   _delay_us(100);                      // Wait for a steady state
