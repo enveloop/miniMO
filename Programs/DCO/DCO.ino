@@ -79,7 +79,7 @@ int currentWave;
 //output
 byte volumeRead;     //pin reading (knob)
 byte volume;         //pin reading and external modulation
-int frequency;       //pin reading (knob and external modulation). It's only one variable because the knob and external input share the input pint
+volatile int frequency;  //pin reading (knob and external modulation). It's only one variable because the knob and external input share the input pint
 
 //external input smoothing
 const int numReadings = 4;
@@ -116,6 +116,9 @@ void setup() {
 
   //disable digital input in pins that do analog conversion
   DIDR0 = (1 << ADC1D) | (1 << ADC2D) | (1 << ADC3D);
+  
+  //disable USI to save power as we are not using it
+  PRR = 1<<PRUSI;
 
   //set clock source for PWM -datasheet p94
   PLLCSR |= (1 << PLLE);               // Enable PLL (64 MHz)
