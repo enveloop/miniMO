@@ -70,8 +70,11 @@ const int PROGMEM targetFrequencies[37] = {  //int array, so we read it with pgm
 int calibratedFrequencies[37];
 bool calibrating = false;
 
-void setup()
-{
+void setup(){
+  //disable USI to save power as we are not using it
+  PRR = 1<<PRUSI;
+  
+  //osc calibration 
   OSCCAL = 161;
   
   //set LED pin and check the battery level
@@ -84,6 +87,9 @@ void setup()
   pinMode(2, OUTPUT); //Note trigger
   pinMode(3, INPUT);  //Analog- freq Input
   pinMode(1, INPUT);  //digital input (push button)
+  
+  //disable USI to save power as we are not using it
+  PRR = 1<<PRUSI;
 
   GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb1, compare with OCR1B, reset on match with OCR1C
   OCR1C  = 0xff;
