@@ -9,36 +9,39 @@
    Licensed under a Creative Commons Attribution 4.0 International license:
    http://creativecommons.org/licenses/by/4.0/
 //
- IMPORTANT: this program uses the input 2 (as marked in the module) as a digital output
- 
- MODES OF OPERATION
-  Default: the knob modifies the frequency
-  Single click: toggles between note ON and OFF
-    -If the note is ON, the LED is also ON (and the other way round)
-  Double click: Frequency calibration with OSC module(see below)
-  Triple click: Frequency calibration with OSC module(see below)
- 
-  Outputs: send note frequency
-  Input 1: frequency input (during calibration) 
-  Input 2 (used as output): sends note ON/OFF 
 
-FREQUENCY CALIBRATION (With an OSC Module)
-  Use this procedure to calibrate the output so that it sends a tuned chromatic scale
-    -Connect any output to the input 1 in the OSC module
-    -Connect the input 1 to any output in the OSC module
-    -Connect the input 2 to the input 2 in the OSC module
-    -Move the knob halfway 
-    -Initiate the calibration procedure in the OSC module    
-    -Click the button two or three times to initiate the calibration procedure in the sequencer
+I/O
+  Outputs: control voltage for frequency
+  Input 1: frequency (during calibration) 
+  Input 2 (used as output): gate (note ON/OFF) 
+ 
+MODES OF OPERATION
+  PLAY (default)
+    -Knob: change frequency
+    -Single click: toggle between note ON and OFF
+      -If the note is ON, the LED is also ON (and the other way round)
+    -Double click: frequency calibration with OSC module(see below)
+    -Triple click: frequency calibration with OSC module(see below)
+ 
+  FREQUENCY CALIBRATION (With an OSC Module)
+  When you enter this mode, miniMO starts an automatic procedure and calibrates its output to send values that result in the target frequencies defined in the program
+    -Before Calibration,
+      -Connect any output to the input 1 in the OSC module
+      -Connect the input 1 to any output in the OSC module
+      -Connect the input 2 to the input 2 in the OSC module
+      -Move the knob halfway 
+      -Start the calibration procedure in the OSC module    
+    -Click the button two or three times to start the calibration procedure in the controller
       -A series of high and low beeps are heard; this calibrates the OSC module
       -A rising pitch is heard; this calibrates the Controller module
-    -When the pitch stops rising, disconnect the cables in input 1 to finish calibration
+    -When the pitch stops rising, calibration is finished 
+      -Disconnect the cables in input 1
   miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again 
 
-BATTERY CHECK
+  BATTERY CHECK
   When you switch the module ON,
-     -If the LED blinks once, the battery is OK
-     -If the LED blinks fast several times, the battery is running low
+    -If the LED blinks once, the battery is OK
+    -If the LED blinks fast several times, the battery is running low
 */
 
 #include <avr/io.h>
