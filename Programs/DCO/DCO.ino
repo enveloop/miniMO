@@ -9,38 +9,47 @@
    Licensed under a Creative Commons Attribution 4.0 International license:
    http://creativecommons.org/licenses/by/4.0/
 //
- MODES OF OPERATION
-  Default: the knob modifies the frequency.
-  Single click: cycles through the available waves, from less to more harmonics.
-    -After the saw wave there is a "silent wave" that mutes the output (stored volume remains unaffected)
-    -After a single click, the LED blinks once
-  Double click: cycles through the frequency ranges
-    -After a double click, the LED blinks twice
-  Triple click: Frequency calibration (see below)
-  Click and hold: the knob modifies the amplitude
-    -While in this mode, the LED blinks constantly
-    -When you change between frequency and amplitude, miniMO memorizes the place where you leave the knob for each parameter
-    -When you go back to modifying a parameter, miniMO waits until you reach the value where you left it earlier
-    
-  Input 1: connect an external source for frequency modulation
-  Input 2: connect an external source for amplitude modulation
-
-FREQUENCY CALIBRATION
-  Use this procedure to bring the frequency back to the usual ranges if you connect (or disconnect) an external source
+I/O
+  Outputs: waveform
+  Input 1: frequency modulation
+  Input 2: amplitude modulation
+  
+MODES OF OPERATION
+  PLAY (default)
+    -Knob: change frequency (default) or amplitude
+      -When you change between modifying frequency and amplitude, miniMO memorizes the point where you leave the knob 
+      -When you start modifying a parameter again, miniMO waits until you reach the value where you left it earlier
+    -Single click: cycle through the available waves, from less to more harmonics
+      -After the saw wave there is a "silent wave" that mutes the output (stored volume remains unaffected)
+      -After a single click, the LED blinks once
+    -Double click: cycle through the frequency ranges
+      -After a double click, the LED blinks twice
+    -Triple click: go to frequency calibration mode (see below)
+    -Click and hold: modify the amplitude using the knob 
+      -While holding, the LED blinks constantly
+      
+  FREQUENCY CALIBRATION
+  When you enter this mode, miniMO starts an automatic procedure and maps its frequency inputs to the expected ranges 
     -If you are connecting a miniMO sequencer or tuned controller: 
-        -Move the knob all the way down
-        -Set the frequency range to the middle
-    -Click the button three times
+      -Move the knob all the way down
+      -Set the frequency range to the middle
+      -Click the button three times
         -The LED turns OFF
-    -Sweep the input through the maximum and minimum values
-    -Calibration finishes automatically if no new max or min values are registered for two seconds
+      -Sweep the input through the maximum and minimum values
+      -Calibration finishes automatically if no new max or min values are registered for two seconds
         -The LED turns ON
+    -If you disconnected an external source:
+      -Click the button three times
+        -The LED turns OFF
+      -Move the knob all the way up and down a few times
+      -The LED turns ON
+      
   miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again
 
-BATTERY CHECK
+  BATTERY CHECK
   When you switch the module ON,
-     -If the LED blinks once, the battery is OK
-     -If the LED blinks fast several times, the battery is running low
+    -If the LED blinks once, the battery is OK
+    -If the LED blinks fast several times, the battery is running low
 */
 
 #include <avr/io.h>
