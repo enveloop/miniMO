@@ -1,0 +1,5 @@
+
+
+PCB MODEL
+
+	*hex_connector.stl: attaches to the hexagonal legs to keep the modules together.
