@@ -2,4 +2,6 @@
 
 PCB MODEL
 
-	*hex_connector.stl: attaches to the hexagonal legs to keep the modules together.
+	*hex_leg_10mm.stl: hexagonal leg, 10 mm tall
+
+	*hex_connector.stl: attaches to the hexagonal legs to group the modules together
