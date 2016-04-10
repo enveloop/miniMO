@@ -4,8 +4,12 @@ PCB MODEL
 
 	*hex_leg_10mm.stl: hexagonal leg, 10 mm tall
 	
-	Settings: head diameter 0.4 mm, layer height 0.2 mm, default speed 30 mm/s  	
+		Settings: head diameter 0.4 mm, layer height 0.2 mm, default speed 30 mm/s  	
 
 	*hex_connector.stl: attaches to the hexagonal legs to group the modules together
-
-	Settings: head diameter 0.4 mm, layer height 0.2 mm, default speed 50 mm/s
+	
+	*hex_connector_b.stl: same as above, with the hexes rotated 90 degrees 
+	
+	*hex_legs_stabilizer: locks the legs' rotation
+	
+		Settings: head diameter 0.4 mm, layer height 0.2 mm, default speed 50 mm/s
