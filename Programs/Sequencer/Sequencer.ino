@@ -24,7 +24,7 @@ MODES OF OPERATION
       -To edit a step, click the button during the PREVIOUS step
     -Triple click: go to frequency calibration mode (see below)
     -The LED turns ON and OFF to mark the steps
-  When you tuen the module OFF and ON, the sequence resets to random vaues
+  Each time you turn the module OFF and ON, miniMO plays a new random sequence
   
   EDIT 
   The sequencer repeats the current step indefinitely at the tempo set in PLAY mode
@@ -41,13 +41,13 @@ MODES OF OPERATION
       -Connect any output to the input 1 in the OSC module
       -Connect the input 1 to any output in the OSC module
       -Connect the input 2 to the input 2 in the OSC module
-      -Move the knob halfway 
-      -Start the calibration procedure in the OSC module    
-    -Click the button two or three times to start the calibration procedure in the sequencer
+      -Move the OSC module's knob halfway 
+      -Start the OSC calibration procedure  
+    -Click the SEQ module's button two or three times to start the calibration procedure in the sequencer
       -A series of high and low beeps are heard; this calibrates the OSC module
-      -A rising pitch is heard; this calibrates the Controller module
-    -When the pitch stops rising, calibration is finished 
-      -Disconnect the cables in input 1
+      -A rising pitch is heard; this calibrates the SEQ module
+    -When the pitch stops rising, calibration is finished. A sequence starts playing 
+      -Disconnect the cables from input 1 in the SEQ module
   miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again 
 
   BATTERY CHECK
@@ -110,7 +110,7 @@ int stepInfo[totalStepInfos]; //array to hold all those parameters
 
 int currentStep = 0;
 
-int tempo = 240;   //bpm
+int tempo = 120;   //bpm
 const int PROGMEM minTempo = 120;
 unsigned int stepDelay = 7500/tempo;
 
@@ -447,6 +447,7 @@ void testFrequency(int target) { //in 1 second, count = freq * 2
 }
 
 void sendCalibration() {    //sends the max and min values (this is to calibrate the oscillator)
+  //digitalWrite(0, LOW);
   digitalWrite(2, HIGH);
   int i = 0;
   for (int  j = 0; j < 5; ++j){ //alternates 5 times between max and min
