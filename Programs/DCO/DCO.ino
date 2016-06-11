@@ -45,6 +45,13 @@ MODES OF OPERATION
       -The LED turns ON
       
   miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again
+  
+  CALIBRATION TROUBLESHOOTING
+  
+  Problem: When connected to an external device, calibration is lost after turning the OSC OFF and ON again
+    -Solution: Disconnect any cable connected to the input 2 before turning it OFF
+               Alternatively, turn OFF any device connected to the OSC input 2,
+               or make sure that said device is not sending any signal to OSC's input 2 before turning the OSC OFF
 
   BATTERY CHECK
   When you switch the module ON,
@@ -88,7 +95,7 @@ int currentWave;
 //output
 byte volumeRead;     //pin reading (knob)
 byte volume;         //pin reading and external modulation
-volatile int frequency;  //pin reading (knob and external modulation). It's only one variable because the knob and external input share the input pint
+volatile unsigned int frequency;  //pin reading (knob and external modulation). It's only one variable because the knob and external input share the input pint
 
 //external input smoothing
 const int numReadings = 4;
@@ -127,7 +134,7 @@ void setup() {
   pinMode(1, INPUT);  //digital input (push button)
 
   //disable digital input in pins that do analog conversion
-  DIDR0 = (1 << ADC1D) | (1 << ADC2D) | (1 << ADC3D);
+  DIDR0 = (1 << ADC1D) | (1 << ADC3D); //PB2,PB3
   
   //set clock source for PWM -datasheet p94
   PLLCSR |= (1 << PLLE);               // Enable PLL (64 MHz)
