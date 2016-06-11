@@ -29,7 +29,7 @@ MODES OF OPERATION
       -Connect any output to the input 1 in the OSC module
       -Connect the input 1 to any output in the OSC module
       -Connect the input 2 to the input 2 in the OSC module
-      -Move the knob halfway in BOTH modules (pointing at input 2)
+      -Move the knob halfway in the Controller (pointing at input 2)
       -Start the calibration procedure in the OSC module    
     -Click the button two or three times to start the calibration procedure in the controller
       -A series of high and low beeps are heard; this calibrates the OSC module
@@ -39,13 +39,17 @@ MODES OF OPERATION
   miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again 
   
   CALIBRATION TROUBLESHOOTING
-  Problem: Calibration gets stuck in an endless loop from the lowest notes up
-    -Solution: Recheck cable connections and knob positions
+  Problem: Calibration gets stuck in an endless loop from the lowest note up
+    -Solution: Recheck cable connections and knob positions, then repeat calibration
   Problem: Calibration gets stuck in an endless loop towards the highest pitches
     -Solution: Move the knob in the controller clockwise by a small amount and repeat calibration
   Problem: After calibration, moving the knob in the controller gives strange sounds
-    -Solution: Disconnect the cable between the OSC output and the controller input  
-    
+    -Solution: Disconnect the cable between the OSC output and the controller input
+  Problem: Calibration is lost after turning the OSC OFF and ON again
+    -Solution: Disconnect the cable connected to the OSC's input 2 before turning it OFF
+               Alternatively, turn OFF the Controller before the OSC,
+               or, make sure that the controller is not sending a note before turning OFF the OSC
+                   
   BATTERY CHECK
   When you switch the module ON,
     -If the LED blinks once, the battery is OK
