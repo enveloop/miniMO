@@ -39,6 +39,8 @@ MODES OF OPERATION
   miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again 
   
   CALIBRATION TROUBLESHOOTING
+  Problem: Calibration gets stuck in an endless loop from the lowest notes up
+    -Solution: Recheck cable connections and knob positions
   Problem: Calibration gets stuck in an endless loop towards the highest pitches
     -Solution: Move the knob in the controller clockwise by a small amount and repeat calibration
   Problem: After calibration, moving the knob in the controller gives strange sounds
@@ -69,14 +71,25 @@ bool beenDoubleClicked = false;
 bool beenLongPressed = false;
 int additionalClicks = 0;      //variable to see how many times we click after the first
 
-const int PROGMEM targetFrequencies[37] = {  //int array, so we read it with pgm_read_word_near(targetFrequencies + j) later on
+//calibration data
+
+const int PROGMEM arrayLength = 37;
+const int PROGMEM targetFrequencies[arrayLength] = {  //int array, so we read it with pgm_read_word_near(targetFrequencies + j) later on
   110,  117,  123, 131,  139,  147,  156,  165,  175,   
   185,  196,  208, 220,  233,  247,  262,  277,  294,       
   311,  330,  349, 370,  392,  415,  440,  466,  494,         
   523,  554,  587, 622,  659,  698,  740,  784,  831,  880 //A2 to A5
 };
+/*
+const int PROGMEM arrayLength = 13; 
+const int PROGMEM targetFrequencies[arrayLength] = {  
+  110, 147, 165, 196,  
+  220, 294, 330, 392,      
+  440, 587, 659, 784, 880 //tetratonic A2 to A5
+};
+*/
 
-int calibratedFrequencies[37];
+int calibratedFrequencies[arrayLength];
 bool calibrating = false;
 
 void setup(){
@@ -114,7 +127,7 @@ void setup(){
   OCR0A = 125;                         //1000hz - 1000 ticks per second https://www.easycalculation.com/engineering/electrical/avr-timer-calculator.php
   TIMSK = (1 << OCIE0A);               // Enable Interrupt on compare with OCR0A
   
-  memoryToArray(calibratedFrequencies, 37); //reads the last calibration values from memory and places them in the calibration array
+  memoryToArray(calibratedFrequencies, arrayLength); //reads the last calibration values from memory and places them in the calibration array
   
   sei();                               // Timer interrupts ON
   
@@ -159,7 +172,7 @@ void toggleNote(){
 
 int noteMap(int note){
   int result;
-  for (int i = 0; i < 37; i++)
+  for (int i = 0; i < arrayLength; i++)
   {
     if (abs(note - calibratedFrequencies[i]) < abs(note - result))
     result = calibratedFrequencies[i];
@@ -172,7 +185,7 @@ void calibrate() {
   PCMSK = (1 << PCINT3);                          //interrupt in input 3 (frequency)
   calibrating = true;
   int nextI = 0;
-  for (int j = 0; j < 37; j++) {                 //for every target frequency in the array
+  for (int j = 0; j < arrayLength; j++) {                 //for every target frequency in the array
     for (int i = nextI; i < 256; i++) {          //tests voltages, starting with the last voltage that gave a valid frequency
       found = false;
       tested = false;
@@ -188,7 +201,7 @@ void calibrate() {
     }
   }
   //once all the notes are calibrated
-  arrayToMemory(calibratedFrequencies, 37);  //save the calibration array to memory   
+  arrayToMemory(calibratedFrequencies, arrayLength);  //save the calibration array to memory   
   PCMSK = (1 << PCINT1);                     //interrupt back to button
   calibrating = false;
 }
@@ -215,10 +228,7 @@ void testFrequency(int target) { //in 1 second, count = freq * 2
   globalTicks = 0;
   Count = 0;
   while (globalTicks < 125);  //eigth of a second
-  if (Count > (target >> 2)) {
-    found = true;
-    flashLED(1,50);
-  }
+  if (Count > (target >> 2)) found = true;
   tested = true;
 }
 
