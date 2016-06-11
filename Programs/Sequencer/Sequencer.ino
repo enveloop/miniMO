@@ -41,14 +41,26 @@ MODES OF OPERATION
       -Connect any output to the input 1 in the OSC module
       -Connect the input 1 to any output in the OSC module
       -Connect the input 2 to the input 2 in the OSC module
-      -Move the OSC module's knob halfway 
+      -Move the SEQ's knob halfway (pointing at input 2) 
       -Start the OSC calibration procedure  
     -Click the SEQ module's button two or three times to start the calibration procedure in the sequencer
       -A series of high and low beeps are heard; this calibrates the OSC module
       -A rising pitch is heard; this calibrates the SEQ module
     -When the pitch stops rising, calibration is finished. A sequence starts playing 
-      -Disconnect the cables from input 1 in the SEQ module
+      -Disconnect the cable int input 1 in the SEQ module
   miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again 
+
+  CALIBRATION TROUBLESHOOTING
+  Problem: Calibration gets stuck in an endless loop from the lowest note up
+    -Solution: Recheck cable connections and knob positions, then repeat calibration
+  Problem: Calibration gets stuck in an endless loop towards the highest pitches
+    -Solution: Move the knob in the controller clockwise by a small amount and repeat calibration
+  Problem: After calibration, moving the knob in the controller gives strange sounds
+    -Solution: Disconnect the cable between the OSC output and the SEQ input
+  Problem: Calibration is lost after turning the OSC OFF and ON again
+    -Solution: Disconnect the cable connected to the OSC's input 2 before turning it OFF
+               Alternatively, turn OFF the SEQ before the OSC,
+               or, make sure that the SEQ is not sending a note before turning OFF the OSC
 
   BATTERY CHECK
   When you switch the module ON,
@@ -89,7 +101,7 @@ const int PROGMEM arrayLength = 13;
 const int PROGMEM targetFrequencies[arrayLength] = {  //int array, so we read it with pgm_read_word_near(targetFrequencies + j) later on
   110, 147, 165, 196,  
   220, 294, 330, 392,      
-  440, 587, 659, 784, 880 //pentatonic A2 to A5
+  440, 587, 659, 784, 880 //tetratonic A2 to A5
 };
 
 int calibratedFrequencies[arrayLength];
@@ -133,7 +145,7 @@ void setup() {
   pinMode(2, OUTPUT); //Marked as IN2 in the PCB- Gate
  
   //disable digital input in pins that do analog conversion
-  DIDR0 = (1<<ADC2D)| (1<<ADC3D);
+  DIDR0 = (1 << ADC1D) | (1 << ADC3D); //PB2,PB3
  
   //PWM Generation -timer 1
   GTCCR  = (1<<PWM1B)|(1<<COM1B1);    //PWM, output on pb1, compare with OCR1B, reset on match with OCR1C
@@ -397,7 +409,7 @@ void calibrate() {
   PCMSK = (1 << PCINT3);                          //interrupt in input 3 (frequency)
   calibrating = true;
   int nextI = 0;
-  for (int j = 0; j < 37; j++) {                 //for every target frequency in the array
+  for (int j = 0; j < arrayLength; j++) {                 //for every target frequency in the array
     for (int i = nextI; i < 256; i++) {          //tests voltages, starting with the last voltage that gave a valid frequency
       found = false;
       tested = false;
@@ -413,7 +425,7 @@ void calibrate() {
     }
   }
   //once all the notes are calibrated
-  arrayToMemory(calibratedFrequencies, 37);  //save the calibration array to memory   
+  arrayToMemory(calibratedFrequencies, arrayLength);  //save the calibration array to memory   
   TCCR0B = (1<<CS02) ;                       // prescale by 256
   OCR0A = 250;                               //125hz -back to the regular setings
   PCMSK = (1 << PCINT1);                     //interrupt back to button
