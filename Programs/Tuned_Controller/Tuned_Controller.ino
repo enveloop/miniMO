@@ -29,15 +29,21 @@ MODES OF OPERATION
       -Connect any output to the input 1 in the OSC module
       -Connect the input 1 to any output in the OSC module
       -Connect the input 2 to the input 2 in the OSC module
-      -Move the knob halfway 
+      -Move the knob halfway in BOTH modules (pointing at input 2)
       -Start the calibration procedure in the OSC module    
     -Click the button two or three times to start the calibration procedure in the controller
       -A series of high and low beeps are heard; this calibrates the OSC module
       -A rising pitch is heard; this calibrates the Controller module
     -When the pitch stops rising, calibration is finished 
-      -Disconnect the cables in input 1
+      -Disconnect the cable in input 1
   miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again 
-
+  
+  CALIBRATION TROUBLESHOOTING
+  Problem: Calibration gets stuck in an endless loop towards the highest pitches
+    -Solution: Move the knob in the controller clockwise by a small amount and repeat calibration
+  Problem: After calibration, moving the knob in the controller gives strange sounds
+    -Solution: Disconnect the cable between the OSC output and the controller input  
+    
   BATTERY CHECK
   When you switch the module ON,
     -If the LED blinks once, the battery is OK
@@ -209,7 +215,10 @@ void testFrequency(int target) { //in 1 second, count = freq * 2
   globalTicks = 0;
   Count = 0;
   while (globalTicks < 125);  //eigth of a second
-  if (Count > (target >> 2)) found = true;
+  if (Count > (target >> 2)) {
+    found = true;
+    flashLED(1,50);
+  }
   tested = true;
 }
 
