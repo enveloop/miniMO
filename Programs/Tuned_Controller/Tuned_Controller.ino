@@ -29,13 +29,13 @@ MODES OF OPERATION
       -Connect any output to the input 1 in the OSC module
       -Connect the input 1 to any output in the OSC module
       -Connect the input 2 to the input 2 in the OSC module
-      -Move the knob halfway in the Controller (pointing at input 2)
+      -Move the Controller's knob halfway (pointing at input 2)
       -Start the calibration procedure in the OSC module    
     -Click the button two or three times to start the calibration procedure in the controller
       -A series of high and low beeps are heard; this calibrates the OSC module
       -A rising pitch is heard; this calibrates the Controller module
     -When the pitch stops rising, calibration is finished 
-      -Disconnect the cable in input 1
+      -Disconnect the cable in input 1 in the Controller module
   miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again 
   
   CALIBRATION TROUBLESHOOTING
