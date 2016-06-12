@@ -41,9 +41,9 @@ MODES OF OPERATION
       -Connect any output to the input 1 in the OSC module
       -Connect the input 1 to any output in the OSC module
       -Connect the input 2 to the input 2 in the OSC module
-      -Move the SEQ's knob halfway (pointing at input 2) 
-      -Start the OSC calibration procedure  
-    -Click the SEQ module's button two or three times to start the calibration procedure in the sequencer
+      -Move the SEQ's knob halfway (pointing at input 2)
+    -Click the SEQ module's button two or three times to start the calibration procedure in the sequencer 
+    -Start the OSC calibration procedure  
       -A series of high and low beeps are heard; this calibrates the OSC module
       -A rising pitch is heard; this calibrates the SEQ module
     -When the pitch stops rising, calibration is finished. A sequence starts playing 
@@ -51,6 +51,8 @@ MODES OF OPERATION
   miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again 
 
   CALIBRATION TROUBLESHOOTING
+  Problem: Can't start calibration in the OSC module
+    -Solution: Make sure to start SEQ calibration before OSC calibration
   Problem: Calibration gets stuck in an endless loop from the lowest note up
     -Solution: Recheck cable connections and knob positions, then repeat calibration
   Problem: Calibration gets stuck in an endless loop towards the highest pitches
@@ -304,12 +306,20 @@ void setTempo(int pin) {
   }
 }
 
+/*
+void setNoteFreq(int pin) {  //doesn't wait to get to the previous value
+    digitalWrite(2, HIGH);
+    tempoChange = false;
+    int noteRead = analogRead(pin)>>2;   //0-255
+    stepInfo[(currentStep * stepParams)] = noteMap(noteRead);
+    OCR1B = noteMap(noteRead);
+}*/
+
 void setNoteFreq(int pin) {
   digitalWrite(2, HIGH);
   tempoChange = false;
   int noteRef = stepInfo[(currentStep * stepParams)];
   int noteRead = analogRead(pin)>>2;
-  
   if (noteChange == false){
     OCR1B = noteRef;
     if (noteRead == noteRef){
@@ -322,7 +332,7 @@ void setNoteFreq(int pin) {
     }     
 }
 
-int noteMap(int note){
+int noteMap(int note){ //returns the closest calibrated value
   int result;
   for (int i = 0; i < arrayLength; i++)
   {
@@ -482,8 +492,12 @@ void initSteps(int address){  //initialize steps' info to random notes
   srand(rSeed);
 
   for (int i = 0; i < maxSteps; i++) {
-    stepInfo[i * stepParams] = noteMap(rand() >> 8);    //convert a random integer to a value between 0 and 255, then search for the nearest value that gives a note in our scale
-    stepInfo[(i * stepParams) + 1 ] = 127;              //all half notes
+    int randomValue = rand() >> 7;                            //rand (max value 32767) >> 7 to give max 255
+    if (randomValue < 10) randomValue = 10;                   //avoiding low values (solves a bug whereby sometimes a very high note was produced)
+    int note = noteMap(randomValue);                          //find the closest calibrated value to the random number 
+    
+    stepInfo[i * stepParams] =  note;                         
+    stepInfo[(i * stepParams) + 1 ] = 127;                    //all half notes
   }
   eeprom_update_word((uint16_t*)500, rSeed);
 }
