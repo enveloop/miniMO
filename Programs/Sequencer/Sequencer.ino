@@ -32,7 +32,9 @@ MODES OF OPERATION
       -miniMO waits until you reach the value it has currently stored
     -Single click: go to PLAY mode 
     -Double click: change note length
-      -Three note lengths are possible: full, half, and silence
+      -Three note lengths are possible: half(staccato), silence, and full(legato), in this order.
+      -By default, the notes are set to half.
+      -Full notes don't send a "note off" signal. This is most useful in combination with the envelope module.
     -The LED stays ON continuously 
    
   FREQUENCY CALIBRATION (With an OSC Module)
@@ -125,7 +127,7 @@ int stepInfo[totalStepInfos]; //array to hold all those parameters
 int currentStep = 0;
 
 int tempo = 120;   //bpm
-const int PROGMEM minTempo = 120;
+const int PROGMEM minTempo = 60;
 unsigned int stepDelay = 7500/tempo;
 
 void setup() {
@@ -219,8 +221,19 @@ void sendStepInPause(int currentStep){
       checkButton();
     } 
   }
-  else {
-    if (currentStepLength == 127) this_delay = stepDelay >> 1;    //full or half note ( >> is /2^1)
+  
+  if (currentStepLength == 255){  //full note
+    digitalWrite(2, HIGH);    //send note
+    while ((globalTicks - this_step) < stepDelay){
+      checkButton();
+      setNoteFreq(3);                                           //only set frequency here (otherwise double click won't work)
+      OCR1B = currentStepNote;                                  //send note
+    } 
+  }
+  
+  else if (currentStepLength == 127) {    //half note
+  
+    this_delay = stepDelay >> 1;    //full or half note ( >> is /2^1)
     
     this_step = globalTicks;
     digitalWrite(2, HIGH);                                      
@@ -248,7 +261,7 @@ void sendStep(int currentStep){
   
   digitalWrite(0, HIGH);          //turn LED on
   
-  if (currentStepLength == 0){
+  if (currentStepLength == 0){     //silence
     digitalWrite(2, LOW);    //off
     while ((globalTicks - this_step) < stepDelay){
       checkButton();
@@ -256,8 +269,18 @@ void sendStep(int currentStep){
       if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW);
     } 
   }
-  else {
-    if (currentStepLength == 127) this_delay = stepDelay >> 1;    //full or half note
+  else if (currentStepLength == 255){  //full note (no note off)
+    digitalWrite(2, HIGH);              //send note
+    while ((globalTicks - this_step) < stepDelay){
+      checkButton();
+      setTempo(3);
+      OCR1B = currentStepNote;
+      if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW);
+    } 
+  }
+  else if (currentStepLength == 127) {
+  
+    this_delay = stepDelay >> 1;    //half note
     
     this_step = globalTicks;
     digitalWrite(2, HIGH);                                      
@@ -268,7 +291,7 @@ void sendStep(int currentStep){
       if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW);
     }
     this_step = globalTicks;
-    digitalWrite(2, LOW);
+    digitalWrite(2, LOW);                                        //note off after half a step
     while ((globalTicks - this_step) < (stepDelay - this_delay)){
       checkButton();
       setTempo(3);
