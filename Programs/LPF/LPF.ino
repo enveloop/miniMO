@@ -23,11 +23,11 @@ I/O
   Input 2: audio signal
 
 OPERATION
-    -Knob: change frequency (default) or resonance
-      -miniMO waits until you reach the value it has currently stored
-    -Click: toggle between frequency and resonance control
-      -The LED blinks once -  frequency control
-      -The LED blinks twice - resonance control
+  Knob: change frequency (default) or resonance
+    -miniMO waits until you reach the value it has currently stored
+  Click: toggle between frequency and resonance control
+    -The LED blinks once -  frequency control
+    -The LED blinks twice - resonance control
 
 BATTERY CHECK
   When you switch the module ON,
