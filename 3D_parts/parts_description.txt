@@ -3,14 +3,24 @@
 PCB MODEL
 
 	/Cases
-		/Structure
+		/ALL_PLA
+
+		Rigid case in two parts
+			Settings: head diameter 0.4 mm, layer height 0.3 mm, default speed 50 mm/s
 			
 		/Shell
-			
+
+		Rigid scaffolding in PLA and flexible shell in filaflex
+
+		*2_part_case_down_scaffolding, 2_part_case_up_scaffolding
+			Settings: head diameter 0.4 mm, layer height 0.3 mm, default speed 50 mm/s
+
+		*2_part_case_down_shell, 2_part_case_up_shell
+			Settings: head diameter 0.4 mm, layer height 0.3 mm, default speed 20 mm/s
 
 	/Connectors_and_Legs
 	
-	A set of useful parts if you are using the module without a case
+	A set of useful parts if you are using the modules without a case
 
 		*hex_leg_10mm.stl: hexagonal leg, 10 mm tall
 		
