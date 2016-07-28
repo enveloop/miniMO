@@ -2,22 +2,24 @@
 
 PCB MODEL
 
-	/Cases
-		/ALL_PLA
+	/Case
+		/Bases
 
-		Rigid case in two parts
+		Print in rigid filament (PLA)
+		There are two sets, for rigid and flexible covers
+		
 			Settings: head diameter 0.4 mm, layer height 0.3 mm, default speed 50 mm/s
 			
-		/Shell
+		/Covers
 
-		Rigid scaffolding in PLA and flexible shell in filaflex
+		Print either in rigid or flexible filament (choose the bases accordingly)
 
-		*2_part_case_down_scaffolding, 2_part_case_up_scaffolding
+		*Rigid (PLA)
 			Settings: head diameter 0.4 mm, layer height 0.3 mm, default speed 50 mm/s
 
-		*2_part_case_down_shell, 2_part_case_up_shell
-			Settings: head diameter 0.4 mm, layer height 0.3 mm, default speed 20 mm/s
-
+		*Flexible
+			Settings: head diameter 0.4 mm, layer height 0.3 mm, default speed 20 mm/s, Retraction 1.20, coasting 0.20
+			
 	/Connectors_and_Legs
 	
 	A set of useful parts if you are using the modules without a case
