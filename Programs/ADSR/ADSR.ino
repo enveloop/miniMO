@@ -11,7 +11,7 @@
 //
 
 I/O
-  Outputs: control voltage for amplitude
+  Outputs: control voltage (usually for amplitude)
   Input 1: modulates the same parameter as the knob, at any given time
   Input 2: gate (note ON/OFF)
 
