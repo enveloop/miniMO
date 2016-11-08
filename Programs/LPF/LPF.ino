@@ -15,7 +15,7 @@ https://beammyselfintothefuture.wordpress.com/2015/02/16/simple-c-code-for-reson
    http://creativecommons.org/licenses/by/4.0/
 //
 
-WARNING! This filter can self-resonate, producing very loud tones 
+WARNING! This filter can self-oscillate, producing very loud tones 
 
 I/O
   Outputs: filtered signal
