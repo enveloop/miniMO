@@ -18,7 +18,7 @@ http://www.arklyffe.com/main/2010/08/29/xorshift-pseudorandom-number-generator/
 I/O
   Outputs: noise/grains
   Input 1: frequency/grain density modulation
-  Input 2: amplitude modulation
+  Input 2: amplitude modulation (if frequency is selected)/aplitude and density modulation (if density is selected)
   
 OPERATION
   Knob: change frequency (default) or grain density
@@ -30,6 +30,10 @@ BATTERY CHECK
   When you switch the module ON,
     -If the LED blinks once, the battery is OK
     -If the LED blinks fast several times, the battery is running low
+
+NOTES&TROUBLESHOOTING
+  Amplitude modulation also affects grain density. This is particularly noticeable when density is set to very low values
+  If a parameter doesn't respond to the knob when input 3 is connected to an external input, disconnect the input, move the knob until the synth becomes responsive, and reconnect the input again
 */
 
 
