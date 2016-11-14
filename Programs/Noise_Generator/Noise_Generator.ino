@@ -24,7 +24,8 @@ OPERATION
   Knob: change frequency (default) or grain density
     -miniMO waits until you reach the value it has currently stored 
   Click: toggle between frequency and density control 
-    -The LED blinks once 
+    -The LED blinks once -  frequency control
+    -The LED blinks twice - density control 
         
 BATTERY CHECK
   When you switch the module ON,
@@ -136,17 +137,18 @@ ISR(TIMER0_COMPA_vect) {               //Timer 0 interruption - changes the widt
 
 ISR(PCINT0_vect) {                       //PIN Interruption - has priority over COMPA; this ensures that the switch will work
   inputButtonValue = digitalRead(1);
-  digitalWrite(0, !inputButtonValue);    //Turn LED off while pressing the button
+  //digitalWrite(0, !inputButtonValue);    //Turn LED off while pressing the button
   if (inputButtonValue) {
     control = !control;
+    if (control)flashLEDOnce();
+    else flashLEDTwice();
   }
 }
 
 void loop() {
   
-  if (control == true)setFrequency(3) ;
+  if (control)setFrequency(3);
   else setGrainDensity(3);
-  
   readExtInput(1);                                 //read analog input 1 (attiny PB2)
 
 }
@@ -225,6 +227,22 @@ void flashLED (int times, int gap) {     //for voltage check only (uses regular 
     digitalWrite(0, LOW);
     delay(gap);
   }
+}
+
+void flashLEDOnce () {
+  digitalWrite(0, LOW);
+  _delay_ms(100);
+  digitalWrite(0, HIGH);
+}
+
+void flashLEDTwice () {
+  digitalWrite(0, LOW);
+  _delay_ms(80);
+  digitalWrite(0, HIGH);
+  _delay_ms(80);
+  digitalWrite(0, LOW);
+  _delay_ms(80);
+  digitalWrite(0, HIGH);
 }
 
 /*
