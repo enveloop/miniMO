@@ -6,13 +6,13 @@
 
 		In order of assembly (bottom to top):
  		
-		*Battery_holder
-		*Battery_lid
-		*Breadboard_holder
-		*Breadboard
-		*Ports_holder
-		*Top
-		*Shaft neck
+		*battery_holder
+		*battery_lid
+		*breadboard_holder
+		*breadboard
+		*ports_holder
+		*top
+		*shaft neck
 		
 		Settings: 
 			All parts Rigid filament (PLA), layer height 0.3 mm, default speed 40 mm/s
@@ -20,7 +20,7 @@
 			
 	/Covers
 
-		*Cover_bottom
-		*Cover_top
+		*down_cover
+		*up_cover
 
 			Settings: same as above
