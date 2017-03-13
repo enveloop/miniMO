@@ -1,0 +1,26 @@
+
+
+3D Printed Model
+
+	/Structure
+
+		In order of assembly (bottom to top):
+ 		
+		*Battery_holder
+		*Battery_lid
+		*Breadboard_holder
+		*Breadboard
+		*Ports_holder
+		*Top
+		*Shaft neck
+		
+		Settings: 
+			All parts Rigid filament (PLA), layer height 0.3 mm, default speed 40 mm/s
+			Head diameter 0.40 EXCEPT for the breadboard, which needs a 0.25 or less
+			
+	/Covers
+
+		*Cover_bottom
+		*Cover_top
+
+			Settings: same as above
