@@ -13,3 +13,11 @@ Push Button		| 1x	|NINIGI TACT-69K-F
 Potentiometer 10K	| 1x	|ACP CA9MV-10K
 Potentiometer knob	| 1x 	|ACP CA9MA 9006
 Jumper	1x2, Female	| 2x	|CAB 9 GS
+
+Also - 
+
+Single core wire to make breadboard jumpers (or a premade set),
+11cm of stranded wire,
+5 male-to-male jumper cables to connect to an Arduino
+Female-to-Female jumper cables to connect to other miniMOs
+2 pin Female header - to - (audio connector of your choice) to connect with audio equipment
