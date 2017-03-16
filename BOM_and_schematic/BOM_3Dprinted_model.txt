@@ -1,0 +1,15 @@
+miniMO 3D Printed - Bill of Materials
+
+Attiny85		| 1x	|
+Socket 5pin, Female	| 1x	|
+Pin header 2 pin, Male	| 4x	|
+Resistor 1M		| 1x	|
+Resistor 10K		| 3x	|
+Resistor 750		| 1x	|
+Resistor 470		| 1x	|
+Capacitor 0.1uF		| 3x	|
+LED, red		| 1x	|
+Push Button		| 1x	|NINIGI TACT-69K-F
+Potentiometer 10K	| 1x	|ACP CA9MV-10K
+Potentiometer knob	| 1x 	|ACP CA9MA 9006
+Jumper	1x2, Female	| 2x	|CAB 9 GS
