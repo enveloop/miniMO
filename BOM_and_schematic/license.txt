@@ -1,6 +1,6 @@
 /*
 //************************
-//*   miniMO 3D Parts    *
+//*   miniMO Schematics  *
 //*   2017 by enveloop   *
 //************************
 //
