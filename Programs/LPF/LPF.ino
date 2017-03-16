@@ -9,7 +9,7 @@
 https://beammyselfintothefuture.wordpress.com/2015/02/16/simple-c-code-for-resonant-lpf-hpf-filters-and-high-low-shelving-eqs/
   
 //
-   http://www.envelooponline.com/minimo
+   http://www.minimosynth.com/
    CC BY 4.0
    Licensed under a Creative Commons Attribution 4.0 International license: 
    http://creativecommons.org/licenses/by/4.0/
@@ -18,9 +18,9 @@ https://beammyselfintothefuture.wordpress.com/2015/02/16/simple-c-code-for-reson
 WARNING! This filter can self-oscillate, producing very loud tones 
 
 I/O
-  Outputs: filtered signal
-  Input 1: frequency/resonance modulation
-  Input 2: audio signal
+  1&2 Outputs - filtered signal
+  3: Input - frequency/resonance modulation
+  4: Input - audio signal
 
 OPERATION
   Knob: change frequency (default) or resonance

@@ -4,15 +4,15 @@
 //* 2016 by enveloop *
 //********************
 //
-   http://www.envelooponline.com/minimo
+   http://www.minimosynth.com/
    CC BY 4.0
    Licensed under a Creative Commons Attribution 4.0 International license:
    http://creativecommons.org/licenses/by/4.0/
 //
 I/O
-  Outputs: waveform
-  Input 1: frequency modulation
-  Input 2: amplitude modulation
+  1&2: Outputs - waveform
+  3: Input - frequency modulation
+  4: Input - amplitude modulation
   
 MODES OF OPERATION
   PLAY (default)

@@ -9,16 +9,16 @@
 http://www.arklyffe.com/main/2010/08/29/xorshift-pseudorandom-number-generator/
 
 //
-   http://www.envelooponline.com/minimo
+   http://www.minimosynth.com/
    CC BY 4.0
    Licensed under a Creative Commons Attribution 4.0 International license:
    http://creativecommons.org/licenses/by/4.0/
 //
 
 I/O
-  Outputs: noise/grains
-  Input 1: frequency/grain density modulation
-  Input 2: amplitude modulation (if frequency is selected)/aplitude and density modulation (if density is selected)
+  1&2: Outputs - noise/grains
+  3: Input - frequency/grain density modulation
+  4: Input - amplitude modulation (if frequency is selected)/aplitude and density modulation (if density is selected)
   
 OPERATION
   Knob: change frequency (default) or grain density

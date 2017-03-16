@@ -4,16 +4,16 @@
 //*   2016 by enveloop   *
 //************************
 //
-   http://www.envelooponline.com/minimo
+   http://www.minimosynth.com
    CC BY 4.0
    Licensed under a Creative Commons Attribution 4.0 International license: 
    http://creativecommons.org/licenses/by/4.0/
 //
 
 I/O
-  Outputs: control voltage (usually for amplitude)
-  Input 1: modulates the same parameter as the knob, at any given time
-  Input 2: gate (note ON/OFF)
+  1&2: Outputs - control voltage (usually for amplitude)
+  3: Input - modulates the same parameter as the knob, at any given time
+  4: Input - gate (note ON/OFF)
 
 OPERATION
   Knob: modify the selected parameter

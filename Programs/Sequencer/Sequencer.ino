@@ -4,16 +4,16 @@
 //*   2016 by enveloop   *
 //************************
 //
-   http://www.envelooponline.com/minimo
+   http://www.minimosynth.com/
    CC BY 4.0
    Licensed under a Creative Commons Attribution 4.0 International license: 
    http://creativecommons.org/licenses/by/4.0/
 //
 
 I/O
-  Outputs: control voltage for frequency
-  Input 1: frequency (during calibration)
-  Input 2 (used as output): gate (note ON/OFF)
+  1&2: Outputs - control voltage for frequency
+  3: Input - frequency (during calibration)
+  4: Output - gate (note ON/OFF)
 
 MODES OF OPERATION
   PLAY (default)
