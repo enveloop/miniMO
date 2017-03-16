@@ -5,7 +5,7 @@ Socket 5pin, Female	| 1x	|
 Pin header 2 pin, Male	| 4x	|
 Resistor 1M		| 1x	|
 Resistor 10K		| 3x	|
-Resistor 750		| 1x	|
+Resistor 100		| 1x	|
 Resistor 470		| 1x	|
 Capacitor 0.1uF		| 3x	|
 LED, red		| 1x	|
