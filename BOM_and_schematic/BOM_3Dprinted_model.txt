@@ -18,6 +18,7 @@ Also -
 
 Single core wire to make breadboard jumpers (or a premade set),
 11cm of stranded wire,
-5 male-to-male jumper cables to connect to an Arduino
-Female-to-Female jumper cables to connect to other miniMOs
-2 pin Female header - to - (audio connector of your choice) to connect with audio equipment
+1 male to male jumper cable for the circuit,
+5 male-to-male jumper cables to connect to an Arduino,
+Female-to-Female jumper cables to connect to other miniMOs,
+2 pin Female header - to - (audio connector of your choice) to connect with audio equipment.
