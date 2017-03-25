@@ -1,3 +1,3 @@
 # miniMO
-Low-Cost 8-bit Programmable Synthesizer Module </br>
-http://www.minimosynth.com/
+8-bit Programmable Synthesizer Module </br>
+http://minimosynth.com/
