@@ -95,7 +95,7 @@ int currentWave;
 //output
 byte volumeRead;     //pin reading (knob)
 byte volume;         //pin reading and external modulation
-volatile unsigned int frequency;  //pin reading (knob and external modulation). It's only one variable because the knob and external input share the input pint
+volatile unsigned int frequency;  //pin reading (knob and external modulation). It's only one variable because the knob and external input share the input pin
 
 //external input smoothing
 const int numReadings = 4;
