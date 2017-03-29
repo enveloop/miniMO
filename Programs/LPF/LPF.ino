@@ -73,31 +73,24 @@ int momentum;
 
 void setup() {
   
-  //disable USI to save power as we are not using it
-  PRR = 1<<PRUSI;
+  PRR = (1 << PRUSI);                  //disable USI to save power as we are not using it
+  DIDR0 = (1 << ADC1D) | (1 << ADC3D); //PB2,PB3  //disable digital input in pins that do analog conversion
   
-  //set LED pin and check the battery level
   pinMode(0, OUTPUT); //LED
-  checkVoltage();
-  ADMUX = 0;                      //reset multiplexer settings
-  
   pinMode(4, OUTPUT); //audio output - outs 1 and 2
   pinMode(3, INPUT);  //analog- control input (knob plus external input 1)
   pinMode(2, INPUT);  //analog- audio input (external input 2)
   pinMode(1, INPUT);  //digital input (push button)
   
-  ADMUX = (0<<REFS1)|(1<<REFS0);    //Vcc as reference
-  ADMUX |= (1<<ADLAR);              //Left adjust result (8 bit conversion) 
-  ADMUX |= (0<<MUX1)|(1<<MUX0);     //use pin2
-
-  cbi(ADCSRA, ADPS2);                //only works using cbi
-  ADCSRA |= (1<<ADPS1)|(1<<ADPS0);
+  checkVoltage();
   
-  ADCSRB = (1<<ADTS2);               //conversion triggered by timer0 overflow 
-
-  //disable digital input in pins that do analog conversion
-  DIDR0 = (1 << ADC1D) | (1 << ADC3D); //PB2,PB3
+  ADCSRA = (1<<ADEN);             //reset ADC Control (ADC Enable 1, everything else 0)
+  ADCSRA |= (1<<ADPS2);           //set adc prescaler  to 16 for 500kHz sampling frequency (8 also works well but is noisier)
   
+  ADMUX = 0;                              //reset multiplexer settings
+  ADMUX |= (1 << REFS2) | (1 << REFS1);   //2.56V internal Voltage Reference disconnected from AREF
+  ADMUX |= (1<<ADLAR);                    //Left adjust result (8 bit conversion) 
+
   //set clock source for PWM -datasheet p94
   PLLCSR |= (1 << PLLE);               // Enable PLL (64 MHz)
   _delay_us(100);                      // Wait for a steady state
@@ -108,7 +101,7 @@ void setup() {
 
   //PWM Generation -timer 1
   GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb1, compare with OCR1B (see interrupt below), reset on match with OCR1C
-  OCR1C  = 0xff;
+  OCR1C  = 255;
   TCCR1  = (1 << CS10);                  // no prescale
 
   //Timer Interrupt Generation -timer 0
@@ -127,7 +120,6 @@ void setup() {
 
 ISR(PCINT0_vect) {                       //PIN Interruption - has priority over COMPA; this ensures that the switch will work
   inputButtonValue = digitalRead(1);
-  ADCSRA |=  (0<<ADSC);
 }
 
 ISR(TIMER0_OVF_vect) {                                             //Alternates between reading the audio (most of the time) and control input.
@@ -145,20 +137,19 @@ ISR(TIMER0_OVF_vect) {                                             //Alternates 
             ADMUX = adc3;                                           //select the control input 
           }
           else if (count > 200) {                                   //if the threshold is not reached after a while,
-            sensorMin = sensorMinDefault;                                         //reset 
+            sensorMin = sensorMinDefault;                           //reset 
             count = 0;
           }
          else count++;
         }
     }
     else {                                                           //if the control input is selected
-      
         controlInput = ADCH;                                         //read the value
         sensorMin = sensorMinDefault;                                //reset sensorMin
         ADMUX = adc1;                                                //select the audio input
     }
-   
-    ADCSRA |=  (1<<ADSC);
+ 
+    ADCSRA |=  (1<<ADSC);                                           //start next conversion
 }
 
 void loop() {
