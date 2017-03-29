@@ -330,8 +330,7 @@ void checkButton() {
 
 void checkVoltage() {                   //voltage from 255 to 0; 46 is (approx)5v, 94 is 2.8, 104-106 is 2.5
                                         //we measure a fixed value of 1.1 against Vcc, so the lower the measurement, the higher Vcc
-  ADMUX |= (1 << ADLAR);                //Left adjust result (8 bit conversion stored in ADCH)
-  ADMUX = (0 << REFS1)|(0 << REFS0);    //Vcc as reference
+  ADMUX = (0 << REFS1) | (0 << REFS0);  //Vcc as reference
   ADMUX |= (1 << ADLAR);                //Left adjust result (8 bit conversion stored in ADCH)
   ADMUX |= (1 << MUX3) | (1 << MUX2);   //1.1v input
   delay(250);                           // Wait for Vref to settle
