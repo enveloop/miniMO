@@ -118,7 +118,7 @@ void setup() {
 }
 
 
-ISR(PCINT0_vect) {                       //PIN Interruption - has priority over COMPA; this ensures that the switch will work
+ISR(PCINT0_vect) {                       //PIN Interruption - has priority over Timer 0; this ensures that the switch will work
   inputButtonValue = digitalRead(1);
 }
 
@@ -202,7 +202,6 @@ void checkButton() {
     readFreq = !readFreq;
     if (readFreq) flashLEDOnce ();
     else flashLEDTwice();
-    ADCSRA |=  (1<<ADSC); 
     button_delay = 0;
    }    
 }
