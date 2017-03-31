@@ -39,7 +39,6 @@ BATTERY CHECK
 #include <util/delay.h>
 
 //shorthands
-#define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define adc1  ((1<<ADLAR) | 1)
 #define adc3  ((1<<ADLAR) | 3)
 
