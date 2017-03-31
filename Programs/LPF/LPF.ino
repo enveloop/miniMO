@@ -38,10 +38,6 @@ BATTERY CHECK
 
 #include <util/delay.h>
 
-//shorthands
-#define adc1  ((1<<ADLAR) | 1)
-#define adc3  ((1<<ADLAR) | 3)
-
 //button input interrupt
 bool inputButtonValue;
 
@@ -88,7 +84,9 @@ void setup() {
   
   ADMUX = 0;                              //reset multiplexer settings
   ADMUX |= (1 << REFS2) | (1 << REFS1);   //2.56V internal Voltage Reference disconnected from AREF
-  ADMUX |= (1<<ADLAR);                    //Left adjust result (8 bit conversion) 
+  ADMUX |= (1<<ADLAR);                    //left-adjust result (8 bit conversion) 
+  ADMUX |= (1 << MUX0);                   //select ADC1 (audio input)
+  ADCSRA |= (1 << ADSC);                  //start conversion
 
   //set clock source for PWM -datasheet p94
   PLLCSR |= (1 << PLLE);               // Enable PLL (64 MHz)
@@ -116,14 +114,13 @@ void setup() {
   digitalWrite(0, HIGH);
 }
 
-
 ISR(PCINT0_vect) {                       //PIN Interruption - has priority over Timer 0; this ensures that the switch will work
   inputButtonValue = digitalRead(1);
 }
 
 ISR(TIMER0_OVF_vect) {                                             //Alternates between reading the audio (most of the time) and control input.
                                                                                                                                                                                                 
-  if (ADMUX == adc1){                                              //if the audio input is selected 
+  if (!(ADMUX & 10)){                                              //if the audio input is selected (it's ADC1, so MUX1 = 0. Then, ADMUX & 10 = 0, or !(ADMUX&10))  
       
       audioInput = ADCH;                                           //read the value 
   
@@ -133,7 +130,7 @@ ISR(TIMER0_OVF_vect) {                                             //Alternates 
       }
       else {                                                        //from 101 onwards
           if (audioInput == sensorMin){                             //the moment the threshold is reached (makes the readings periodical),  
-            ADMUX = adc3;                                           //select the control input 
+            ADMUX |= (1 << MUX1);                                   //select the control input (ADC3, so MUX1 = 1 and MUX0=1. MUX0 was already set to 1 during setup) 
           }
           else if (count > 200) {                                   //if the threshold is not reached after a while,
             sensorMin = sensorMinDefault;                           //reset 
@@ -145,7 +142,7 @@ ISR(TIMER0_OVF_vect) {                                             //Alternates 
     else {                                                           //if the control input is selected
         controlInput = ADCH;                                         //read the value
         sensorMin = sensorMinDefault;                                //reset sensorMin
-        ADMUX = adc1;                                                //select the audio input
+        ADMUX &= ~(1 << MUX1);                                       //select the audio input (ADC1, so MUX1 = 0 and MUX0=1. MUX0 was already set to 1 during setup) 
     }
  
     ADCSRA |=  (1<<ADSC);                                           //start next conversion
