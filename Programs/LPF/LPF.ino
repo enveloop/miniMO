@@ -120,7 +120,7 @@ ISR(PCINT0_vect) {                       //PIN Interruption - has priority over 
 
 ISR(TIMER0_OVF_vect) {                                             //Alternates between reading the audio (most of the time) and control input.
                                                                                                                                                                                                 
-  if (!(ADMUX & 10)){                                              //if the audio input is selected (it's ADC1, so MUX1 = 0. Then, ADMUX & 10 = 0, or !(ADMUX&10))  
+  if (!(ADMUX & 2)){                                               //if the audio input is selected (it's ADC1, so MUX1 = 0. Then, ADMUX & 2 = 0, or !(ADMUX&2). 2 is binary 10)  
       
       audioInput = ADCH;                                           //read the value 
   
