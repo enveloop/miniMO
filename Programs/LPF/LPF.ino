@@ -1,7 +1,7 @@
 /*
 //******************************
 //*   miniMO Low Pass Filter   *
-//*   2016 by enveloop         *
+//*   2017 by enveloop         *
 //******************************
   Based on the Filter Algorithm 
         by Rohan Hill,
@@ -47,19 +47,15 @@ int count;
 byte sensorMinDefault = 63;
 byte sensorMin;
 
-//freq control 
-byte freq = 255; //open
-bool freqChange = true;  //behaviour after turning on: change cutoff frequency
-byte potPosFreqRef;
-
-//resonance control
-int reso = 0; //min
-bool coarseResoChange = false;
-byte potPosResoRef;         
-byte resoRead;
+//control parameters
+bool parameterChange = true; //behaviour after turning on: change cutoff frequency
+int currentParameter = 0; 
+byte parameters[] = {
+  255,   //frequency (255: filteropen)
+  0      //resonance
+};
 
 //button press control
-bool readFreq = true;
 int button_delay;
 
 //LPF parameters
@@ -82,11 +78,12 @@ void setup() {
   ADCSRA = (1<<ADEN);             //reset ADC Control (ADC Enable 1, everything else 0)
   ADCSRA |= (1<<ADPS2);           //set adc prescaler  to 16 for 500kHz sampling frequency (8 also works well but is noisier)
   
-  ADMUX = 0;                              //reset multiplexer settings
-  ADMUX |= (1 << REFS2) | (1 << REFS1);   //2.56V internal Voltage Reference disconnected from AREF
-  ADMUX |= (1<<ADLAR);                    //left-adjust result (8 bit conversion) 
-  ADMUX |= (1 << MUX0);                   //select ADC1 (audio input)
-  ADCSRA |= (1 << ADSC);                  //start conversion
+  ADMUX = 0;                                            //reset multiplexer settings
+  //ADMUX |= (1 << REFS2) | (1 << REFS1);               //2.56V internal Voltage Reference disconnected from AREF
+  ADMUX |= (0 << REFS2) | (0 << REFS1) | (0 << REFS0);  //Vcc as voltage reference --not necessary, but a reminder
+  ADMUX |= (1<<ADLAR);                                  //left-adjust result (8 bit conversion) 
+  ADMUX |= (1 << MUX0);                                 //select ADC1 (audio input)
+  ADCSRA |= (1 << ADSC);                                //start conversion
 
   //set clock source for PWM -datasheet p94
   PLLCSR |= (1 << PLLE);               // Enable PLL (64 MHz)
@@ -120,7 +117,7 @@ ISR(PCINT0_vect) {                       //PIN Interruption - has priority over 
 
 ISR(TIMER0_OVF_vect) {                                             //Alternates between reading the audio (most of the time) and control input.
                                                                                                                                                                                                 
-  if (!(ADMUX & 2)){                                               //if the audio input is selected (it's ADC1, so MUX1 = 0. Then, ADMUX & 2 = 0, or !(ADMUX&2). 2 is binary 10)  
+  if (!(ADMUX & 0x02)){                                             //if the audio input is selected... (it's ADC1, so MUX1 = 0. Then, ADMUX & binary 10 = 0, or !(ADMUX&0x02)  
       
       audioInput = ADCH;                                           //read the value 
   
@@ -152,41 +149,17 @@ void loop() {
   
   OCR1B = doResonantLPF(audioInput);
   
-  readControlInput();
+  setParameter();
   checkButton();
 }
 
-void readControlInput(){
-  if (readFreq) setFrequency();
-  else setResonance();
-}
-
-void setFrequency() {
-  coarseResoChange = false;            //reset the control condition for volume
-  byte freqRead = controlInput;    
-  if (freqChange == false) {
-    if (freqRead == potPosFreqRef) {
-      freqChange = true;
-    }
-  }
-  if (freqChange == true) {
-    potPosFreqRef = freqRead;
-    freq = freqRead;
-  }
-}
-
-void setResonance() {
-  freqChange = false;                   //reset the control condition for frequency
-  resoRead = controlInput; 
-  if (coarseResoChange == false) {
-    if (resoRead == potPosResoRef) {
-      coarseResoChange = true;
-    }
-  }
-  if (coarseResoChange == true) {
-    potPosResoRef = resoRead;    
-    reso = resoRead;
-  }
+void setParameter() {                                                //wait until we reach the latest value stored for that parameter, then start controlling it again
+  if((controlInput >> 4) == (parameters[currentParameter] >> 4)){    //>>4, so we track 15 reference positions. This makes it easier to pick it up.   
+      parameterChange = true;
+   }
+   if(parameterChange){ 
+     parameters[currentParameter] = controlInput;
+   }
 }
 
 void checkButton() {
@@ -195,9 +168,10 @@ void checkButton() {
     _delay_ms(10);
   }
   if ((inputButtonValue == LOW) && (button_delay > 0)) {   //button released after a while (regular single click)
-    readFreq = !readFreq;
-    if (readFreq) flashLEDOnce ();
-    else flashLEDTwice();
+    currentParameter++;
+    if (currentParameter > 1) currentParameter = 0; //2 parameters, indexes 0 and 1
+    flashLEDSlow(currentParameter + 1);             //parameter 0 - flash once, etc
+    parameterChange = false;
     button_delay = 0;
    }    
 }
@@ -205,12 +179,11 @@ void checkButton() {
 int doResonantLPF(int input) {
     
     input = input << 3;
-    
     int distanceToGo = input - lastOutput;
     momentum = momentum + distanceToGo;     
-    lastOutput = lastOutput + scale(momentum, reso) + scale(distanceToGo, freq);
+    lastOutput = lastOutput + scale(momentum, parameters[1]) + scale(distanceToGo, parameters[0]);
     
-    output = ((lastOutput) >> 3) + (reso >> 2);  
+    output = ((lastOutput) >> 3) + (parameters[1] >> 2);  
 
     if (output < 0) { output = 0; momentum = momentum >> 1;}
     if (output > 255) {output = 255; momentum = momentum >> 1;}
@@ -247,22 +220,6 @@ void checkVoltage() {                   //voltage from 255 to 0; 46 is (approx)5
     flashLED(1, 250);
 }
 
-void flashLEDOnce () {
-  digitalWrite(0, LOW);
-  _delay_ms(100);
-  digitalWrite(0, HIGH);
-}
-
-void flashLEDTwice () {
-  digitalWrite(0, LOW);
-  _delay_ms(70);
-  digitalWrite(0, HIGH);
-  _delay_ms(70);
-  digitalWrite(0, LOW);
-  _delay_ms(70);
-  digitalWrite(0, HIGH);
-}
-
 void flashLED (int times, int gap) {     //for voltage check only (uses regular delay)
   for (int i = 0; i < times; i++)
   {
@@ -270,5 +227,14 @@ void flashLED (int times, int gap) {     //for voltage check only (uses regular 
     delay(gap);
     digitalWrite(0, LOW);
     delay(gap);
+  }
+}
+
+void flashLEDSlow(int times) {
+  for (int i = 0; i < times; i++){
+    _delay_ms(100);
+    digitalWrite(0, LOW);
+    _delay_ms(100);
+    digitalWrite(0, HIGH);
   }
 }
