@@ -95,7 +95,7 @@ void setup() {
 
   //PWM Generation -timer 1
   GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb1, compare with OCR1B (see interrupt below), reset on match with OCR1C
-  OCR1C  = 255;
+  OCR1C  = 0xff;                         // 255
   TCCR1  = (1 << CS10);                  // no prescale
 
   //Timer Interrupt Generation -timer 0
@@ -112,7 +112,7 @@ void setup() {
 }
 
 ISR(PCINT0_vect) {                       //PIN Interruption - has priority over Timer 0; this ensures that the switch will work
-  inputButtonValue = PINB & 0x02;        //Reads button (digital input1, the second bit in register PINB. We check the value with & binary 10, so 0x02
+  inputButtonValue = PINB & 0x02;        //Reads button (digital input 1, the second bit in register PINB. We check the value with & binary 10, so 0x02)
 }
 
 ISR(TIMER0_OVF_vect) {                                             //Alternates between reading the audio (most of the time) and control input.
