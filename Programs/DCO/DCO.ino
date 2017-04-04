@@ -114,11 +114,16 @@ const char PROGMEM sinetable[128] = {
 unsigned char wavetable[256];
 
 void setup() {
-  //disable USI to save power as we are not using it
-  PRR = 1<<PRUSI;
   
-  //set LED pin and check the battery level
+  PRR = (1 << PRUSI);                  //disable USI to save power as we are not using it
+  DIDR0 = (1 << ADC1D) | (1 << ADC3D); //PB2,PB3  //disable digital input in pins that do analog conversion
+  
   pinMode(0, OUTPUT); //LED
+  pinMode(4, OUTPUT); //timer 1 in digital output 4 - outs 1 and 2
+  pinMode(3, INPUT);  //analog- freq input (knob plus external input 1)
+  pinMode(2, INPUT);  //analog- amplitude input (external input 2)
+  pinMode(1, INPUT);  //digital input (push button)
+  
   checkVoltage();
   ADMUX = 0;                      //reset multiplexer settings
 
@@ -127,15 +132,6 @@ void setup() {
   sensorMax = eeprom_read_word((uint16_t*)3);
   if (sensorMax == 0) sensorMax = 1023; //if there was no data in memory, give it the default value
 
-  //set the rest of the pins
-  pinMode(4, OUTPUT); //timer 1 in digital output 4 - outs 1 and 2
-  pinMode(3, INPUT);  //analog- freq input (knob plus external input 1)
-  pinMode(2, INPUT);  //analog- amplitude input (external input 2)
-  pinMode(1, INPUT);  //digital input (push button)
-
-  //disable digital input in pins that do analog conversion
-  DIDR0 = (1 << ADC1D) | (1 << ADC3D); //PB2,PB3
-  
   //set clock source for PWM -datasheet p94
   PLLCSR |= (1 << PLLE);               // Enable PLL (64 MHz)
   _delay_us(100);                      // Wait for a steady state
@@ -146,8 +142,8 @@ void setup() {
 
   //PWM Generation -timer 1
   GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb1, compare with OCR1B (see interrupt below), reset on match with OCR1C
-  OCR1C  = 0xff;
-  TCCR1  = (1 << CS10);                // no prescale
+  OCR1C  = 0xff;                         // 255
+  TCCR1  = (1 << CS10);                  // no prescale
 
   //Timer Interrupt Generation -timer 0
   TCCR0A = (1 << WGM01) | (1 << WGM00); // fast PWM
@@ -172,16 +168,16 @@ void setup() {
   writeWave(0);                        // write a sine wave to the table
 }
 
-ISR(TIMER0_OVF_vect) {               //Timer 0 interruption - changes the width of timer 1's pulse to generate waves
+ISR(PCINT0_vect) {                       //PIN Interruption - has priority over COMPA; this ensures that the switch will work
+  inputButtonValue = PINB & 0x02;        //Reads button (digital input 1, the second bit in register PINB. We check the value with & binary 10, so 0x02)
+}
+
+ISR(TIMER0_OVF_vect) {                   //Timer 0 interruption - changes the width of timer 1's pulse to generate waves
   static byte sample;
   static unsigned int phase;
   OCR1B = sample;
-  sample  = ((wavetable[phase >> 8] * volume) >> 8);
+  sample = ((wavetable[phase >> 8] * volume) >> 8);
   phase += frequency;                                 //phase accumulator
-}
-
-ISR(PCINT0_vect) {                       //PIN Interruption - has priority over COMPA; this ensures that the switch will work
-  inputButtonValue = digitalRead(1);
 }
 
 void loop() {
@@ -220,7 +216,7 @@ void calibrate() {
 }
 
 void checkButton() {
-  while (inputButtonValue == HIGH) {
+  while (inputButtonValue == 1) {
     button_delay++;
     _delay_ms(10);
     if (button_delay > 10 & ! beenDoubleClicked) {
@@ -229,7 +225,7 @@ void checkButton() {
       setVolume(3);                                //change the volume
     }
   }
-  if (inputButtonValue == LOW) {
+  if (inputButtonValue == 0) {
     beenDoubleClicked = false;
     if (button_delay > 0) {
       bool hold = true;
@@ -296,7 +292,7 @@ void checkButton() {
 //when we reach it, we start controlling the parameter again.
 
 void setVolume(int pin) {
-  coarseFreqChange = false;   //reset the control condition for frequency
+  coarseFreqChange = false;                    //reset the control condition for frequency
   if (coarseVolChange == false) {
     byte coarsevolRead = analogRead(pin) >> 7; //right shifting to get values between 0 and 7
     if (coarsevolRead == potPosVolRef) {
