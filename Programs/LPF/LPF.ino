@@ -112,7 +112,7 @@ void setup() {
 }
 
 ISR(PCINT0_vect) {                       //PIN Interruption - has priority over Timer 0; this ensures that the switch will work
-  inputButtonValue = digitalRead(1);
+  inputButtonValue = PINB & 0x02;        //Reads button (digital input1, the second bit in register PINB. We check the value with & binary 10, so 0x02
 }
 
 ISR(TIMER0_OVF_vect) {                                             //Alternates between reading the audio (most of the time) and control input.
