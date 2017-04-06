@@ -91,8 +91,9 @@ void setup() {
   while (!(PLLCSR & (1 << PLOCK)));    // Ensure PLL lock
   PLLCSR |= (1 << PCKE);               // Enable PLL as clock source for timer 1
 
-  TIMSK  = 0;                          // Timer interrupts OFF
+  cli();                               // Interrupts OFF (disable interrupts globally)
   
+  //PWM Generation -timer 1
   GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb1, compare with OCR1B, reset on match with OCR1C
   OCR1C  = 0xff;
   TCCR1  = (1 << CS10);                  // no prescale
@@ -106,14 +107,14 @@ void setup() {
   OCR0A = 100;                         //10000hz - 10000 ticks per second https://www.easycalculation.com/engineering/electrical/avr-timer-calculator.php
   TIMSK = (1 << OCIE0A);               // Enable Interrupt on compare with OCR0A
   
-  sei();                               // Timer interrupts ON
+  sei();                               // Interrupts ON (enable interrupts globally)
   
   digitalWrite(0, HIGH); // turn LED ON
 }
 
 //PIN Interrupt
-ISR(PCINT0_vect) {
-  inputButtonValue = digitalRead(1);  //Reads button
+ISR(PCINT0_vect) {                 //PIN Interruption - has priority over Timer 0; this ensures that the switch will work
+  inputButtonValue = PINB & 0x02;  //Reads button (digital input1, the second bit in register PINB. We check the value with & binary 10, so 0x02) 
 }
 
 //Timer0 interrupt
