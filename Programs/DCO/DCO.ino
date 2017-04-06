@@ -31,7 +31,7 @@ MODES OF OPERATION
   FREQUENCY CALIBRATION
   When you enter this mode, miniMO starts an automatic procedure and maps its frequency inputs to the expected ranges 
     -If you are connecting a miniMO sequencer or tuned controller: 
-      -Move the knob all the way down
+      -Move the knob all the way down (counter-clockwise)
       -Set the frequency range to the middle
       -Click the button three times
         -The LED turns OFF
