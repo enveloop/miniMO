@@ -138,7 +138,7 @@ void setup() {
   while (!(PLLCSR & (1 << PLOCK)));    // Ensure PLL lock
   PLLCSR |= (1 << PCKE);               // Enable PLL as clock source for timer 1
 
-  TIMSK  = 0;                          // Timer interrupts OFF
+  cli();                               // Interrupts OFF (disable interrupts globally)
 
   //PWM Generation -timer 1
   GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb1, compare with OCR1B (see interrupt below), reset on match with OCR1C
@@ -154,7 +154,7 @@ void setup() {
   GIMSK |= (1 << PCIE);                // Enable Pin Change Interrupt
   PCMSK |= (1 << PCINT1);              // on pin 1
 
-  sei();                               // Timer interrupts ON
+  sei();                               // Interrupts ON (enable interrupts globally)
 
   //default frequency and volume
   freqRange = 1;
