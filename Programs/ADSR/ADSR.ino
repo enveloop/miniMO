@@ -95,7 +95,7 @@ void setup() {
   
   //PWM Generation -timer 1
   GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb1, compare with OCR1B, reset on match with OCR1C
-  OCR1C  = 0xff;
+  OCR1C  = 0xff;                         //255
   TCCR1  = (1 << CS10);                  // no prescale
   
   GIMSK = (1 << PCIE);    // Enable Pin Change Interrupt
@@ -104,7 +104,7 @@ void setup() {
   //Timer Interrupt Generation -timer 0
   TCCR0A = (1 << WGM01);               //Clear Timer on Compare (CTC) with OCR0A
   TCCR0B = (1 << CS01);                // prescaled by 8
-  OCR0A = 100;                         //10000hz - 10000 ticks per second https://www.easycalculation.com/engineering/electrical/avr-timer-calculator.php
+  OCR0A = 0x64;                        //0x64 = 100 //10000hz - 10000 ticks per second https://www.easycalculation.com/engineering/electrical/avr-timer-calculator.php
   TIMSK = (1 << OCIE0A);               // Enable Interrupt on compare with OCR0A
   
   sei();                               // Interrupts ON (enable interrupts globally)
