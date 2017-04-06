@@ -73,14 +73,10 @@ int total = 0;                  // the running total
 byte volumeModulation = 255;
 
 void setup() {
-  //disable USI to save power as we are not using it
-  PRR = 1<<PRUSI;
   
-  //set LED pin and check the battery level
-  pinMode(0, OUTPUT); //LED
-  checkVoltage();
-  ADMUX = 0;                      //reset multiplexer settings
-  
+  PRR = (1 << PRUSI);                  //disable USI to save power as we are not using it
+  DIDR0 = (1 << ADC1D) | (1 << ADC3D); //PB2,PB3  //disable digital input in pins that do analog conversion
+
   /*
   //read calibrated values for freq input
   sensorMin = eeprom_read_word((uint16_t*)1);
@@ -89,26 +85,27 @@ void setup() {
   */
   
   //set the rest of the pins
+  pinMode(0, OUTPUT); //LED
   pinMode(4, OUTPUT); //timer 1 in digital output 4 - outs 1 and 2
   pinMode(3, INPUT);  //analog- freq input (knob plus external input 1)
   pinMode(2, INPUT);  //analog- amplitude input (external input 2)
   pinMode(1, INPUT);  //digital input (push button)
-
-  //disable digital input in pins that do analog conversion
-  DIDR0 = (1 << ADC1D) | (1 << ADC3D); //PB2,PB3
   
+  checkVoltage();
+  ADMUX = 0;                      //reset multiplexer settings
+
   //set clock source for PWM -datasheet p94
   PLLCSR |= (1 << PLLE);               // Enable PLL (64 MHz)
   _delay_us(100);                      // Wait for a steady state
   while (!(PLLCSR & (1 << PLOCK)));    // Ensure PLL lock
   PLLCSR |= (1 << PCKE);               // Enable PLL as clock source for timer 1
 
-  TIMSK  = 0;                          // Timer interrupts OFF
+  cli();                               // Interrupts OFF (disable interrupts globally)
 
   //PWM Generation -timer 1
   GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb1, compare with OCR1B (see interrupt below), reset on match with OCR1C
-  OCR1C  = 0xff;
-  TCCR1  = (1 << CS10);                // no prescale
+  OCR1C  = 0xff;                         // 255
+  TCCR1  = (1 << CS10);                  // no prescale
   
   //Timer Interrupt Generation -timer 0                                                          
   TCCR0A = (1<<WGM01);                 //Clear Timer on Compare (CTC) with OCR0A
@@ -120,8 +117,8 @@ void setup() {
   GIMSK |= (1 << PCIE);                // Enable Pin Change Interrupt
   PCMSK |= (1 << PCINT1);              // on pin 1
 
-  sei();                               // Timer interrupts ON
-
+  sei();                               // Interrupts ON (enable interrupts globally)
+  
   //go for it!
   digitalWrite(0, HIGH);               // turn LED ON
   
@@ -136,7 +133,7 @@ ISR(TIMER0_COMPA_vect) {               //Timer 0 interruption - changes the widt
 }
 
 ISR(PCINT0_vect) {                       //PIN Interruption - has priority over COMPA; this ensures that the switch will work
-  inputButtonValue = digitalRead(1);
+  inputButtonValue = PINB & 0x02;        //Reads button (digital input1, the second bit in register PINB. We check the value with & binary 10, so 0x02) 
   //digitalWrite(0, !inputButtonValue);    //Turn LED off while pressing the button
   if (inputButtonValue) {
     control = !control;
