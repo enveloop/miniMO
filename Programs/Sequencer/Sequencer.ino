@@ -37,34 +37,37 @@ MODES OF OPERATION
       -Full notes don't send a "note off" signal. This is most useful in combination with the envelope module.
     -The LED stays ON continuously 
    
-  FREQUENCY CALIBRATION (With an OSC Module)
+  FREQUENCY CALIBRATION (With an Oscillator Module)
   When you enter this mode, miniMO starts an automatic procedure and calibrates its output to send values that result in the target frequencies defined in the program
     -Before calibration,
-      -Connect any output to the input 1 in the OSC module
-      -Connect the input 1 to any output in the OSC module
-      -Connect the input 2 to the input 2 in the OSC module
-      -Move the SEQ's knob halfway (pointing at input 2)
-    -Click the SEQ module's button two or three times to start the calibration procedure in the sequencer 
-    -Start the OSC calibration procedure  
-      -A series of high and low beeps are heard; this calibrates the OSC module
-      -A rising pitch is heard; this calibrates the SEQ module
-    -When the pitch stops rising, calibration is finished. A sequence starts playing 
-      -Disconnect the cable int input 1 in the SEQ module
+      -Connect the sequencer's I/O 1 or 2 to the oscillator's I/O 3 (sequencer note output to oscillator frequency input)
+      -Connect the sequencer's I/O 3 to the oscillator's I/O 1 or 2 (sequencer calibration input to oscillator frequency output)
+      -Connect the sequencer's I/O 4 to the oscillator's I/O 4      (sequencer gate output to oscillator volume output)
+      -Turn the sequencer's knob all the way counter-clockwise and make sure the arrow points at the button 
+      -Turn the sequencer's knob halfway (arrow pointing at I/O 4)
+    -Click the sequencer module's button two or three times to start the calibration procedure in the sequencer 
+    -Start the oscillator calibration procedure (refer to oscillator manual on how to set it up) 
+      -A series of high and low beeps are heard; this calibrates the oscillator module
+      -A rising pitch is heard; this calibrates the sequencer module
+    -When the pitch stops rising, calibration is finished 
+      -Disconnect the cable from I/O 3 in the sequencer module
+      -Turn the sequencer OFF and ON again. A sequence starts playing ^_^
+      
   miniMO automatically saves the calibrated values to memory and recalls them if you turn it OFF and ON again 
 
   CALIBRATION TROUBLESHOOTING
-  Problem: Can't start calibration in the OSC module
-    -Solution: Make sure to start SEQ calibration before OSC calibration
+  Problem: Can't start calibration in the oscillator module
+    -Solution: Make sure to start sequencer calibration before oscillator calibration
   Problem: Calibration gets stuck in an endless loop from the lowest note up
     -Solution: Recheck cable connections and knob positions, then repeat calibration
   Problem: Calibration gets stuck in an endless loop towards the highest pitches
     -Solution: Move the knob in the controller clockwise by a small amount and repeat calibration
   Problem: After calibration, moving the knob in the controller gives strange sounds
-    -Solution: Disconnect the cable between the OSC output and the SEQ input
-  Problem: Calibration is lost after turning the OSC OFF and ON again
-    -Solution: Disconnect the cable connected to the OSC's input 2 before turning it OFF
-               Alternatively, turn OFF the SEQ before the OSC,
-               or, make sure that the SEQ is not sending a note before turning OFF the OSC
+    -Solution: Disconnect the cable between the oscillator output and the sequencer input
+  Problem: Calibration is lost after turning the oscillator OFF and ON again
+    -Solution: Disconnect the cable connected to the oscillator's I/O 4 before turning it OFF
+               Alternatively, turn OFF the sequencer before the oscillator,
+               or, make sure that the sequencer is not sending a note before turning OFF the oscillator
 
   BATTERY CHECK
   When you switch the module ON,
@@ -131,26 +134,24 @@ const int PROGMEM minTempo = 60;
 unsigned int stepDelay = 7500/tempo;
 
 void setup() {
-  //disable USI to save power as we are not using it
-  PRR = 1<<PRUSI;
+  
+  PRR = (1 << PRUSI);                  //disable USI to save power as we are not using it
+  DIDR0 = (1 << ADC1D) | (1 << ADC3D); //PB2,PB3  //disable digital input in pins that do analog conversion
   
   //calibrate the internal oscillator
   OSCCAL = 161;
   
-  //set LED pin and check the battery level
   pinMode(0, OUTPUT); //LED
-  checkVoltage();
-  ADMUX = 0;                      //reset multiplexer settings
+  pinMode(4, OUTPUT); //Note output
+  pinMode(3, INPUT);  //Speed input. Frequency input during calibration
+  pinMode(2, OUTPUT); //Gate output
+  pinMode(1, INPUT);  //Digital input (push button)
   
-  //set pins
-  pinMode(3, INPUT);  //analog input (potentiometer plus external input 1)
-  pinMode(1, INPUT);  //digital input (push button)
-  pinMode(4, OUTPUT); //Note
-  pinMode(2, OUTPUT); //Marked as IN2 in the PCB- Gate
- 
-  //disable digital input in pins that do analog conversion
-  DIDR0 = (1 << ADC1D) | (1 << ADC3D); //PB2,PB3
- 
+  checkVoltage();
+  ADMUX = 0;                           //reset multiplexer settings
+  
+  cli();                               // Interrupts OFF (disable interrupts globally)
+  
   //PWM Generation -timer 1
   GTCCR  = (1<<PWM1B)|(1<<COM1B1);    //PWM, output on pb1, compare with OCR1B, reset on match with OCR1C
   OCR1C  = 0xff;
@@ -163,25 +164,24 @@ void setup() {
   //Timer Interrupt Generation -timer 0                                                          
   TCCR0A = (1<<WGM01);                 //Clear Timer on Compare (CTC) with OCR0A
   TCCR0B = (1<<CS02) ;                 // prescale by 256
-  OCR0A = 250;                         //125hz https://www.easycalculation.com/engineering/electrical/avr-timer-calculator.php
+  OCR0A = 0xfa;                        //0xfa = 250 //125hz https://www.easycalculation.com/engineering/electrical/avr-timer-calculator.php
   TIMSK = (1 << OCIE0A);               // Enable Interrupt on compare with OCR0A
   
   memoryToArray(calibratedFrequencies, arrayLength); //reads the last calibration values from memory and places them in the calibration array
   
   initSteps(500);                      //initialize step information. 500 is the memory address for the random Seed 
   
-  sei();
+  sei();                               // Interrupts ON (enable interrupts globally)
      
   digitalWrite(0, HIGH);      //let there be light
 }
 
-//PIN Interruption
-ISR(PCINT0_vect) {                        
-   inputButtonValue = digitalRead(1);
-   Count++;
+ISR(PCINT0_vect) {                  //PIN Interruption - has priority over Timer 0; this ensures that the switch will work   
+   inputButtonValue = PINB & 0x02;  //Reads button (digital input1, the second bit in register PINB. We check the value with & binary 10, so 0x02) 
+   Count++;                         //This interruption happens both on rising and falling. When calibrating, we use the analog input as source for the interrupt, and freq = interruptions (Count) in a second/2 
 }
 
-//Timer interruption
+//Timer0 interruption
 ISR(TIMER0_COMPA_vect) {
   globalTicks++;
 }
@@ -437,16 +437,16 @@ void checkButton() {
 
 void calibrate() {
   TCCR0B = (1 << CS01) | (1 << CS00);             //prescale by 64
-  OCR0A = 125;                                    //1000hz - 1000 ticks per second
+  OCR0A = 0x7d;                                    //0x7d = 125 //1000hz - 1000 ticks per second
   sendCalibration();                              //sends the max and min values (this is to calibrate the oscillator)
-  PCMSK = (1 << PCINT3);                          //interrupt in input 3 (frequency)
+  PCMSK = (1 << PCINT3);                          //source for PIN interruption: input 3 (frequency)
   calibrating = true;
   int nextI = 0;
-  for (int j = 0; j < arrayLength; j++) {                 //for every target frequency in the array
+  for (int j = 0; j < arrayLength; j++) {        //for every target frequency in the array
     for (int i = nextI; i < 256; i++) {          //tests voltages, starting with the last voltage that gave a valid frequency
       found = false;
       tested = false;
-      OCR1B = i;                                //sends the voltage
+      OCR1B = i;                                 //sends the voltage
       while (tested == false) {
         testFrequency(pgm_read_word_near(targetFrequencies + j)); 
       }
@@ -460,7 +460,7 @@ void calibrate() {
   //once all the notes are calibrated
   arrayToMemory(calibratedFrequencies, arrayLength);  //save the calibration array to memory   
   TCCR0B = (1<<CS02) ;                       // prescale by 256
-  OCR0A = 250;                               //125hz -back to the regular setings
+  OCR0A = 0xfa;                               //0xfa = 250 //125hz -back to the regular setings
   PCMSK = (1 << PCINT1);                     //interrupt back to button
   calibrating = false;
 }
@@ -498,7 +498,7 @@ void sendCalibration() {    //sends the max and min values (this is to calibrate
   for (int  j = 0; j < 5; ++j){ //alternates 5 times between max and min
     i = 0;
     for (i = 0; i < 256; ++i) {
-      OCR1B = 255; 
+      OCR1B = 0xff;               //255
       _delay_ms(2);
     }
     i = 0;
