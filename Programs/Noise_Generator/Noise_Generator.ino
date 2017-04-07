@@ -34,7 +34,7 @@ BATTERY CHECK
 
 NOTES&TROUBLESHOOTING
   Amplitude modulation also affects grain density. This is particularly noticeable when density is set to very low values
-  If a parameter doesn't respond to the knob when input 3 is connected to an external input, disconnect the input, move the knob until the synth becomes responsive, and reconnect the input again
+  If a parameter doesn't respond to the knob when I/O 3 is connected to an external input, disconnect the input, move the knob until the module becomes responsive, and reconnect the input again
 */
 
 
