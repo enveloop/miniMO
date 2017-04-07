@@ -52,7 +52,7 @@ MODES OF OPERATION
   Problem: Calibration is lost after turning the oscillator OFF and ON again
     -Solution: Disconnect the cable connected to the oscillator's input 2 before turning it OFF
                Alternatively, turn OFF the Controller before the oscillator,
-               or, make sure that the controller is not sending a note before turning OFF the oscillator
+               or make sure that the controller is not sending a note before turning OFF the oscillator
                    
   BATTERY CHECK
   When you switch the module ON,
