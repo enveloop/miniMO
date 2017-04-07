@@ -32,9 +32,9 @@ MODES OF OPERATION
       -miniMO waits until you reach the value it has currently stored
     -Single click: go to PLAY mode 
     -Double click: change note length
-      -Three note lengths are possible: half(staccato), silence, and full(legato), in this order.
-      -By default, the notes are set to half.
-      -Full notes don't send a "note off" signal. This is most useful in combination with the envelope module.
+      -Three note lengths are possible: half(staccato), silence, and full(legato), in this order
+      -By default, the notes are set to half
+      -Full notes don't send a "note off" signal. This is most useful in combination with the envelope module
     -The LED stays ON continuously 
    
   FREQUENCY CALIBRATION (With an Oscillator Module)
@@ -67,7 +67,7 @@ MODES OF OPERATION
   Problem: Calibration is lost after turning the oscillator OFF and ON again
     -Solution: Disconnect the cable connected to the oscillator's I/O 4 before turning it OFF
                Alternatively, turn OFF the sequencer before the oscillator,
-               or, make sure that the sequencer is not sending a note before turning OFF the oscillator
+               or make sure that the sequencer is not sending a note before turning OFF the oscillator
 
   BATTERY CHECK
   When you switch the module ON,
