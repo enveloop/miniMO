@@ -49,9 +49,9 @@ MODES OF OPERATION
   CALIBRATION TROUBLESHOOTING
   
   Problem: When connected to an external device, calibration is lost after turning the OSC OFF and ON again
-    -Solution: Disconnect any cable connected to the input 2 before turning it OFF
-               Alternatively, turn OFF any device connected to the OSC input 2,
-               or make sure that said device is not sending any signal to OSC's input 2 before turning the OSC OFF
+    -Solution: Disconnect any cable connected to the I/O 4 before turning it OFF
+               Alternatively, turn OFF any device connected to the OSC I/O 4,
+               or make sure that said device is not sending any signal to OSC I/O 4 before turning the OSC OFF
 
   BATTERY CHECK
   When you switch the module ON,
