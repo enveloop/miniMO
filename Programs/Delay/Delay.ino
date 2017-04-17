@@ -52,8 +52,8 @@ int button_delay;
 int iw1;
 int iw2;
 
-int count = 0;
-byte delay_buffer[256];  // Audio Memory Array 8-Bit
+int index = 0;
+byte delayBuffer[256];  // Audio Memory Array 8-Bit
 byte sample;
 
 bool parameterChange = false;
@@ -143,7 +143,7 @@ void loop() {
   
   setParameter();
   
-  sample = delay_buffer[count] ;   // read a sample from the delay buffer
+  sample = delayBuffer[index] ;   // read a sample from the delay buffer
   
   OCR1B = sample;                 // send sample to PWM Output
  
@@ -159,13 +159,13 @@ void loop() {
 
   sample = 127 + iw2;               // add offset to the result
               
-  delay_buffer[count] = sample;     // store sample in delay buffer
+  delayBuffer[index] = sample;     // store sample in delay buffer
   
-  count++;
+  index++;
   
   variableDelay(parameters[2]);          //slow down the process with a delay
   
-  if (count > parameters[1]) count = 0;  // aprox.30 ms for 256 samples (7.8Khz/256) 
+  if (index > parameters[1]) index = 0;  // aprox.30 ms for 256 samples (7.8Khz/256) 
 } 
 
 void variableDelay(int us) {
