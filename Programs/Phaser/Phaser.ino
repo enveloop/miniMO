@@ -59,7 +59,7 @@ int test;
 int iw1, iw2;
 int phaseSample;
 int index, phaseIndex;
-byte delayBuffer[256];  // Audio Memory Array 8-Bit
+byte sampleBuffer[256];  // Audio Memory Array 8-Bit
 
 bool highSensitivity = false;
 
@@ -170,14 +170,14 @@ void loop() {
   setParameter();
   
   //retrieve stored sample    
-  phaseSample = delayBuffer[phaseIndex];    // retrieve sample
+  phaseSample = sampleBuffer[phaseIndex];    // retrieve sample
   phaseIndex = index - parameters[0];       // the control input sets the phase
   phaseIndex = phaseIndex & parameters[1];  // limit index
   
   OCR1B = (phaseSample + audioInput) >> 1;  // average newly acquired sample with phased sample, and send the result to the PWM output           
 
   //store newly acquired sample to use in the next cycle
-  delayBuffer[index] = audioInput;  
+  sampleBuffer[index] = audioInput;  
   index++;                            
   index = index & 255;                       // limit index
 
@@ -240,12 +240,6 @@ void checkButton() {
     }
   }
 }
-
-void changeSensitivity() {
-    
-}
-    
-  
 
 void checkVoltage() {                   //voltage from 255 to 0; 46 is (approx)5v, 94 is 2.8, 104-106 is 2.5
                                         //we measure a fixed value of 1.1 against Vcc, so the lower the measurement, the higher Vcc
