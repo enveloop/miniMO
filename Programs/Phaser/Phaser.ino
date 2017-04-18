@@ -21,9 +21,9 @@ I/O
   4: Input - audio signal
 
 OPERATION
-  Knob: change phase (default), buffer size or sample rate
+  Knob: change phase (default), phased buffer size or sample rate
     -miniMO waits until you reach the value it has currently stored
-  Click: toggle between phase, buffer size and delay time control
+  Click: toggle between phase, phased buffer size and delay time control
     -the LED blinks 1 to 3 times depending on the parameter selected (1-Phase, 2-Buffer, 3-Rate)
   Double Click: toggle between normal and high sensitivity modes
 
@@ -170,16 +170,16 @@ void loop() {
   setParameter();
   
   //retrieve stored sample    
-  phaseSample = delayBuffer[phaseIndex];       // retrieve sample
+  phaseSample = delayBuffer[phaseIndex];    // retrieve sample
   phaseIndex = index - parameters[0];       // the control input sets the phase
-  phaseIndex = phaseIndex & parameters[1];           // limit index
+  phaseIndex = phaseIndex & parameters[1];  // limit index
   
   OCR1B = (phaseSample + audioInput) >> 1;  // average newly acquired sample with phased sample, and send the result to the PWM output           
 
   //store newly acquired sample to use in the next cycle
   delayBuffer[index] = audioInput;  
   index++;                            
-  index = index & 255;               // limit index
+  index = index & 255;                       // limit index
 
   variableDelay(parameters[2]);
 } 
