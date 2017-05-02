@@ -350,7 +350,7 @@ void sineWave() {                                       //too costly to calculat
     wavetable[i] = pgm_read_byte_near(sinetable + i);
   }
   wavetable[128] = 255;
-  for (int i = 129; i < 255; ++i) {
+  for (int i = 129; i < 256; ++i) {
     wavetable[i] = wavetable[256 - i] ;
   }
 }
