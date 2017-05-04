@@ -3,7 +3,7 @@
 //*   miniMO AMPLITUDE MODULATION GENERATOR       *
 //*             2017 by enveloop                  *
 //*************************************************
-Based on the Arduino Audio Reverb
+Based on the Arduino Ring Modulator
       by Martin Nawrath,
       as described Here:
 http://interface.khm.de/index.php/lab/interfaces-advanced/arduino-realtime-audio-processing/
@@ -30,14 +30,16 @@ I/O
 OPERATION
   Knob: change carrier frequency (default) or modulator frequency
     -When you change between parameters, miniMO memorizes the point where you leave the knob 
-      -When you start modifying a parameter again, miniMO waits until you reach the value where you left it earlier
-  Click: toggle between carrier or modulator freq
-    -the LED blinks once
-  Double Click: cycle through the available wave shapes (sine, triangle, square, and saw)
-    -the LED blinks twice
-    -both modulator and carrier have the same waveshape
-  Click, hold, and release after a couple of seconds: cycle through the available modulations (ring modulation, amplitude modulation and amplitude modulation pLus)
-    -the LED blinks three times
+    -When you start modifying a parameter again, miniMO waits until you reach the value where you left it earlier
+  Click: toggle between carrier or modulator frequency
+    -The LED blinks once
+  Double Click: cycle through the available wave shapes
+    -The LED blinks twice
+    -Shapes (in order): sine, triangle, square, and saw
+    -Note: Both modulator and carrier have the same wave shape
+  Click, hold, and release after a couple of seconds: cycle through the available modulations
+    -The LED blinks thrice
+    -Modulation types (in order): Ring Modulation, Amplitude Modulation, and Amplitude Modulation Plus
 
 BATTERY CHECK
   When you switch the module ON,
@@ -53,7 +55,7 @@ NOTES:
       -Amplitude Modulation Plus preserves both F1 and F2, and it also produces F2 + F1 and F2 - F1
 
   ON EXTERNAL MODULATION
-     If you are controlling the frequency of the modulator with the knob,
+     If you are controlling the frequency of the modulator wave with the knob,
       -A signal applied to I/O 3 will change the frequency, with the knob setting the central value (offset to both the maximum and minimum values)
       -A signal applied to I/O 4 will change the frequency, with the knob setting the maximum value 
  */
