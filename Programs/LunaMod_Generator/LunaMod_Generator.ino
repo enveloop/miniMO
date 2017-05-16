@@ -20,7 +20,7 @@ While you keep the button pressed, it records the knob's positions as notes in t
 Depending of the tempo and the time you keep the button pressed, you can modify individual notes, or the entire loop at once. 
 
 I/O
-  1&2 Outputs - signal
+  1&2: Outputs - signal
   3: Input - frequency/tempo modulation
   4: Input - wave change
 
