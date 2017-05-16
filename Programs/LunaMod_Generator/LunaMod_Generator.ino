@@ -22,7 +22,7 @@ Depending of the tempo and the time you keep the button pressed, you can modify 
 I/O
   1&2 Outputs - signal
   3: Input - frequency/tempo modulation
-  4: Input - manual trigger
+  4: Input - wave change
 
 OPERATION
 
@@ -32,8 +32,9 @@ OPERATION
   Button Click: record the knob's position
     -Recording continues for as long as the button is pressed
     -After the button is depressed, the knob controls tempo once more
-  Finger Tap on both terminals of input 1: cycle through the available wave shapes
+  Finger Tap on both terminals of I/O 4: cycle through the available wave shapes
     -Shapes (in order): triangle, square, and saw 
+    -You can also use an external source to change waves automatically
 
 BATTERY CHECK
   When you switch the module ON,
@@ -49,9 +50,8 @@ NOTES:
     This is an experimental feature! if for whatever reason it doesn't work for you, please let me know
     To disable this feature,
       comment the line that has the following code: if (analogRead(1) < 700) advanceWave();
-      writeWave(value from 0 to 2) sets the initial wave shape
+      writeWave(value from 0 to 2) sets the initial wave shape.
 */
-
 
 #include <util/delay.h>
 
