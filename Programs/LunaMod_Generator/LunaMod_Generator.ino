@@ -29,7 +29,7 @@ OPERATION
   Knob: change tempo (default) or frequency
     -If you change tempo, miniMO waits until you reach the value it has currently stored
     -The LED toggles ON/OFF every 8 notes to give an indication of the tempo
-  Button Click: record the knob's position
+  Button Press: record the knob's position
     -Recording continues for as long as the button is pressed
     -After the button is depressed, the knob controls tempo once more
   Finger Tap on both terminals of I/O 4: cycle through the available wave shapes
@@ -50,7 +50,7 @@ NOTES:
     This is an experimental feature! if for whatever reason it doesn't work for you, please let me know
     To disable this feature,
       comment the line that has the following code: if (analogRead(1) < 700) advanceWave();
-      writeWave(value from 0 to 2) sets the initial wave shape.
+      modify writeWave(value from 0 to 2) to set the initial wave shape.
 */
 
 #include <util/delay.h>
