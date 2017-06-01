@@ -5,6 +5,7 @@
 //*********************************
   Inspired by The Annoy-O-Bug by Alex Wulff: https://www.hackster.io/AlexWulff/the-annoy-o-bug-a-chirping-light-up-throwie-37e58a
   Watchdog setup described by Martin Nawrath: http://interface.khm.de/index.php/lab/interfaces-advanced/sleep_watchdog_battery/
+  Sqaure wave generation described here: https://playground.arduino.cc/Main/PbSynthCode
   Also uses the Xorshift pseudorandom number generator, described here: http://www.arklyffe.com/main/2010/08/29/xorshift-pseudorandom-number-generator/
 
 //
@@ -28,6 +29,7 @@ OPERATION
 
   Knob: 
     -If the button is not pressed: change frequency (sequences 00 to 02), initial note frequency (sequence 03) or note length (sequence 04)
+      -All the tones are square waves
     -If the button is pressed: change sleep interval
     -The LED toggles ON/OFF with every note played
   Button Press: set the sleep interval 
@@ -185,7 +187,7 @@ void freqout(int freq, int t) {
   int hperiod;    
   long cycles, i; 
 
-  hperiod = (500000 / (freq - 7));             
+  hperiod = 500000 / (freq - 7);          // subtract 7 us to make up for digitalWrite overhead - determined empirically                
   cycles = ((long)freq * (long)t) / 1000;   
   
   digitalWrite(0, HIGH);                  //turn LED ON
