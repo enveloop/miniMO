@@ -35,15 +35,15 @@ OPERATION
   Button Press: set the sleep interval 
     -To register the change, you must have the button pressed by the end of the current sequence
       -miniMO checks for a button press right before going to sleep
-    -Depending on the knob's position, the interval can take values from 64ms to 8 s   
+    -Depending on the knob's position, the interval can take values from 64ms to 8s   
   Finger Tap on both terminals of I/O 4: cycle through the available sequences
     -To register the change, you must have the terminals pressed by the end of the current sequence
     -Available Sequences (in order): 
       -sequence 00: single beep 
       -sequence 01: double beep
-      -sequence 03: SOS in Morse code
-      -sequence 04: Portamento SFX
-      -sequence 05: single random tone 
+      -sequence 02: SOS in Morse code
+      -sequence 03: Portamento SFX
+      -sequence 04: single random tone 
 
 BATTERY CHECK
   When you switch the module ON,
@@ -53,12 +53,12 @@ BATTERY CHECK
 NOTES:
 
   ON CHANGING THE SEQUENCE
-    This program uses I/O 4 as a makeshift extra button.
-    The best way to try this feature is to turn miniMO on, wait for a couple beeps, then gently place a finger over BOTH pins of I/O 4, until the sequence changes.
+    This program uses I/O 4 as a makeshift extra button
+    The best way to try this feature is to turn miniMO on, wait for a couple beeps, then gently place a finger over BOTH pins of I/O 4, until the sequence changes
     This is an experimental feature! if for whatever reason it doesn't work for you, please let me know
     To disable this feature,
       comment the line that has the following code: if (analogRead(1) < 700) advanceSeq();
-      modify playSeq(value from 0 to 4) to set the initial sequence.
+      modify playSeq(value from 0 to 4) to set the initial sequence
 */
 
 #include <avr/sleep.h>
