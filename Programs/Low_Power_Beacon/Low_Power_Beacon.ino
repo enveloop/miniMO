@@ -79,9 +79,10 @@ void setup() {
  pinMode(1, INPUT);  //digital input (push button)
 
  checkVoltage();
- ADMUX = 0;                      //reset multiplexer settings
+ ADMUX = 0;                              //reset multiplexer settings
  
  setup_watchdog(watchdogInterval);       //0=16ms, 1=32ms,2=64ms,3=128ms,4=250ms,5=500ms, 6=1 sec,7=2 sec, 8=4 sec, 9= 8sec
+ set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 } 
 
 ISR(WDT_vect) {                  //the watchdog ISR must be present even if it's empty. Otherwise, the system resets every time it wakes up 
@@ -91,7 +92,7 @@ void loop() {
     
     playSeq(currentSeq); 
     checkButtons();              
-    system_sleep();
+    sleep();
 
 } 
 
@@ -143,7 +144,7 @@ void sequence01() {                      //double beep
 
 void sequence02() {                      //SOS in Morse Code
   dot(); dot(); dot(); 
-  delay(100);
+  delay(100);                            //pause between characters is 50. Between words is 150, but we already have 50 from the last character
   dash(); dash(); dash();
   delay(100); 
   dot(); dot(); dot();
@@ -171,7 +172,7 @@ byte xorshift32(void) {
     return y32 ^= (y32 << 3);  //pattern values: 8 bit
 }
 
-//Morse******************************
+//Morse******************************        
 void dot() {
   freqout((analogRead(3) << 2), 50);
   delay(50);
@@ -191,8 +192,7 @@ void freqout(int freq, int t) {
   cycles = ((long)freq * (long)t) / 1000;   
   
   digitalWrite(0, HIGH);                  //turn LED ON
-  for (i=0; i<= cycles; i++)              //square wave generation
-  {  
+  for (i=0; i<= cycles; i++) {            //square wave generation
     digitalWrite(4, HIGH);  
     delayMicroseconds(hperiod); 
     digitalWrite(4, LOW);  
@@ -201,18 +201,13 @@ void freqout(int freq, int t) {
   digitalWrite(0, LOW);                   //turn LED OFF                
 }
 
-void system_sleep() {
+void sleep() {
                   
-  ADCSRA &= ~(1 << ADEN);              // switch ADC OFF
-  
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN); 
-  
-  sleep_enable();                      // nap time
-  sleep_mode();                        
+  ADCSRA &= ~(1 << ADEN);              //switch ADC OFF
+    
+  sleep_mode();                        //nap time! sleep_mode() takes care of enabling and disabling sleep
 
-  sleep_disable();                     // wake up when watchdog times out
-
-  ADCSRA |= (1 << ADEN);               // switch ADC ON
+  ADCSRA |= (1 << ADEN);               //switch ADC ON
 }
 
 void setup_watchdog(int ii) {
@@ -229,7 +224,7 @@ void setup_watchdog(int ii) {
                                       //the bits that set the prescaler are not contiguous in the register: from right to left, they take positions 1,2,3, and 6
                                       //the code above took care of that, because if the input is 7 or 8, it sets bit 6 to 1, instead of setting bit 4 to 1
   
-  WDTCR |= (1 << WDIE);               // trigger interrupt on time out
+  WDTCR |= (1 << WDIE);               //trigger interrupt on time out
 }
 
 void checkVoltage() {                   //voltage from 255 to 0; 46 is (approx)5v, 94 is 2.8, 104-106 is 2.5
