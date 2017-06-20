@@ -150,7 +150,11 @@ void sequence02() {                      //SOS in Morse Code
   dot(); dot(); dot();
 }
 
-void sequence03() {                     //descending portamento, initial frequency set by knob's position
+void sequence03() {
+  freqout(xorshift32(), (analogRead(3) >> 3));  //random frequencies, note legnth set by knob's position
+}
+
+void sequence04() {                     //descending portamento, initial frequency set by knob's position
   int readOut = analogRead(3);
   if (readOut < 70) readOut = 70;       //lower readouts crash the program 
   int initial = readOut << 5;           //readout * 2^5 (just makes the initial frequency fairly high)
@@ -161,9 +165,6 @@ void sequence03() {                     //descending portamento, initial frequen
   }
 }
 
-void sequence04() {
-  freqout(xorshift32(), (analogRead(3) >> 3));  //random frequencies, note legnth set by knob's position
-}
 //*******************************************************
 
 byte xorshift32(void) {
