@@ -28,7 +28,7 @@ I/O
 OPERATION
 
   Knob: 
-    -If the button is not pressed: change frequency (sequences 00 to 02), initial note frequency (sequence 03) or note length (sequence 04)
+    -If the button is not pressed: change frequency (sequences 00 to 02), note length (sequence 03), or initial note frequency (sequence 04)
       -All the tones are square waves
     -If the button is pressed: change sleep interval
     -The LED toggles ON/OFF with every note played
@@ -42,8 +42,8 @@ OPERATION
       -sequence 00: single beep 
       -sequence 01: double beep
       -sequence 02: SOS in Morse code
-      -sequence 03: Portamento SFX
-      -sequence 04: single random tone 
+      -sequence 03: single random tone
+      -sequence 04: portamento SFX 
 
 BATTERY CHECK
   When you switch the module ON,
