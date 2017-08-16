@@ -13,8 +13,8 @@
 
 CONCEPT
 
-This is an example program to show how to work with OLED SSD1306 Screens.
-The program reads an input attached to I/O 3, shows the value on screen,
+This is an example program to show how to work with OLED SSD1306 I2C Screens.
+The program reads inputs attached to I/O 3, shows the readings on the screen,
 and toggles the outputs ON or OFF depending on the value; 
 this last behavior will work even if the screen is not connected. 
 
@@ -23,7 +23,20 @@ I/O
   3: Input
   4: not used
 
-SCREEN SETUP
+SCREEN SETUP - HARDWARE
+
+  -Locate miniMO's programming header, under the LED light
+    -Note the vertical writing next to the pins, from bottom to top: GND, SCK, MO, MI, RST, VCC
+    -Connect the Screen's VCC to the header's VCC
+    -Connect the screen's GND to the header's GND
+    -Connect the screen's SCL to miniMO's MI
+    -Connect the screen's SDA to miniMO's MO
+  -With the screen connected, 
+    -Load a battery in miniMO's holder
+    -Connect all three pins of the Battery-External male header AT ONCE
+      -The easiest way to do this is to get a three pin female header and wire or solder its terminals together
+
+SCREEN SETUP - SOFTWARE
 
   In oled.h , set the width, height, and orientation of your screen
 
