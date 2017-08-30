@@ -217,7 +217,7 @@ void checkButton() {
             
           if (additionalClicks == 0) {                //single click
             if (beenLongPressed) {                    //long press
-               flashLEDSlow(1);
+               flashLEDSlow(3);
                currentModulation++;                   //change type of modulation
                if (currentModulation > 2) currentModulation = 0;   
               beenLongPressed = false;
