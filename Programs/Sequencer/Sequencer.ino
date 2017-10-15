@@ -43,7 +43,7 @@ MODES OF OPERATION
       -Connect the sequencer's I/O 1 or 2 to the oscillator's I/O 3 (sequencer note output to oscillator frequency input)
       -Connect the sequencer's I/O 3 to the oscillator's I/O 1 or 2 (sequencer calibration input to oscillator frequency output)
       -Connect the sequencer's I/O 4 to the oscillator's I/O 4      (sequencer gate output to oscillator volume output)
-      -Turn the sequencer's knob all the way counter-clockwise and make sure the arrow points at the button 
+      -Turn the sequencer's knob all the way counter-clockwise and make sure the arrow in the shaft points at the button (if it doesn't, remove the shaft and put it back in place with the arrow pointing at the button)  
       -Turn the sequencer's knob halfway (arrow pointing at I/O 4)
     -Click the sequencer module's button two or three times to start the calibration procedure in the sequencer 
     -Start the oscillator calibration procedure (refer to oscillator manual on how to set it up) 
