@@ -126,7 +126,7 @@ ISR(TIMER0_OVF_vect) {                   //Timer 0 interruption - changes the wi
 }
 
 void loop() {
-  for (int i = 0; i < 63; i++) {                         //reads through the note array
+  for (int i = 0; i < 64; i++) {                         //reads through the note array
     currentStep = i;                                
     if (i == 0 || i == 15 || i == 31 || i == 47) {       
       digitalWrite(0, HIGH);                             //turn the LED ON every 16 notes                          
