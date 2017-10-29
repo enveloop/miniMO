@@ -510,9 +510,9 @@ void sendCalibration() {    //sends the max and min values (this is to calibrate
 }
 
 void initSteps(int address){  //initialize steps' info to random notes
-  unsigned int rSeed = eeprom_read_word((uint16_t*)500);
-  rSeed++;
-  srand(rSeed);
+  unsigned int rSeed = eeprom_read_word((uint16_t*)address);  //read the last seed we used, from memory
+  rSeed++;                                                    //add one -now we have a new seed
+  srand(rSeed);                                               //assign the new seed to the random generator (this way we'll have a new sequence of random values)
 
   for (int i = 0; i < maxSteps; i++) {
     int randomValue = rand() >> 7;                            //rand (max value 32767) >> 7 to give max 255
@@ -522,7 +522,7 @@ void initSteps(int address){  //initialize steps' info to random notes
     stepInfo[i * stepParams] =  note;                         
     stepInfo[(i * stepParams) + 1 ] = 127;                    //all half notes
   }
-  eeprom_update_word((uint16_t*)500, rSeed);
+  eeprom_update_word((uint16_t*)address, rSeed);              //save the seed we used
 }
  
 void checkVoltage() {                   //voltage from 255 to 0; 46 is (approx)5v, 94 is 2.8, 104-106 is 2.5
