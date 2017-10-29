@@ -119,8 +119,8 @@ bool found = false;
 bool tested = false;
 
 //sequencer data
-const int PROGMEM maxSteps = 4;             //this parameter sets the number of steps in the sequence
-const int PROGMEM stepParams = 2;           //parameters: note-length
+const byte PROGMEM maxSteps = 4;             //this parameter sets the number of steps in the sequence
+const byte PROGMEM stepParams = 2;           //parameters: note-length
 bool play = true;
 
 const int totalStepInfos = (maxSteps * stepParams); //all the parameters in all the steps
@@ -143,7 +143,7 @@ void setup() {
   
   pinMode(0, OUTPUT); //LED
   pinMode(4, OUTPUT); //Note output
-  pinMode(3, INPUT);  //Speed input. Frequency input during calibration
+  pinMode(3, INPUT);  //Speed input/ Note input during editing/ Frequency input during calibration
   pinMode(2, OUTPUT); //Gate output
   pinMode(1, INPUT);  //Digital input (push button)
   
