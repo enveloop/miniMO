@@ -223,7 +223,7 @@ void sendStepInPause(int currentStep){
   }
   
   if (currentStepLength == 255){  //full note
-    digitalWrite(2, HIGH);    //send note
+    digitalWrite(2, HIGH);    
     while ((globalTicks - this_step) < stepDelay){
       checkButton();
       setNoteFreq(3);                                           //only set frequency here (otherwise double click won't work)
