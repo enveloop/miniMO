@@ -259,23 +259,23 @@ void sendStep(int currentStep){
   int this_delay = stepDelay;
   unsigned int this_step; 
   
-  digitalWrite(0, HIGH);          //turn LED on
+  digitalWrite(0, HIGH);          //turn LED ON to mark the step (even if there's a silence)
   
   if (currentStepLength == 0){     //silence
-    digitalWrite(2, LOW);    //off
+    digitalWrite(2, LOW);          //cut external trigger
     while ((globalTicks - this_step) < stepDelay){
       checkButton();
       setTempo(3);
-      if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW);
+      if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW); //turn LED OFF
     } 
   }
   else if (currentStepLength == 255){  //full note (no note off)
-    digitalWrite(2, HIGH);              //send note
+    digitalWrite(2, HIGH);             //send external trigger
     while ((globalTicks - this_step) < stepDelay){
       checkButton();
       setTempo(3);
       OCR1B = currentStepNote;
-      if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW);
+      if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW); //turn LED OFF
     } 
   }
   else if (currentStepLength == 127) {
@@ -283,19 +283,18 @@ void sendStep(int currentStep){
     this_delay = stepDelay >> 1;    //half note
     
     this_step = globalTicks;
-    digitalWrite(2, HIGH);                                      
+    digitalWrite(2, HIGH);         //send external trigger                             
     while ((globalTicks - this_step) < this_delay){
       checkButton(); 
       setTempo(3);                                
       OCR1B = currentStepNote;                                  //send note
-      if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW);
+      if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW);   //turn LED OFF
     }
     this_step = globalTicks;
-    digitalWrite(2, LOW);                                        //note off after half a step
+    digitalWrite(2, LOW);                                        //cut external trigger
     while ((globalTicks - this_step) < (stepDelay - this_delay)){
       checkButton();
       setTempo(3);
-      if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW);
     }
   }
 }
