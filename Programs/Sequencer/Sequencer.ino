@@ -278,9 +278,9 @@ void sendStep(int currentStep){
       if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW); //turn LED OFF
     } 
   }
-  else if (currentStepLength == 127) {
+  else if (currentStepLength == 127) { //half note
   
-    this_delay = stepDelay >> 1;    //half note
+    this_delay = stepDelay >> 1;    //same as stepDelay / 2^1 but more efficient
     
     this_step = globalTicks;
     digitalWrite(2, HIGH);         //send external trigger                             
@@ -459,7 +459,7 @@ void calibrate() {
   //once all the notes are calibrated
   arrayToMemory(calibratedFrequencies, arrayLength);  //save the calibration array to memory   
   TCCR0B = (1<<CS02) ;                       // prescale by 256
-  OCR0A = 0xfa;                               //0xfa = 250 //125hz -back to the regular setings
+  OCR0A = 0xfa;                               //0xfa = 250 //125hz -back to the regular settings
   PCMSK = (1 << PCINT1);                     //interrupt back to button
   calibrating = false;
 }
