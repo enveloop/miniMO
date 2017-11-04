@@ -488,11 +488,11 @@ void memoryToArray(int array[], int arraySize){
   } 
 }
 
-void testFrequency(int target) { //in 1 second, count = freq * 2
+void testFrequency(int target) { //in 1 second, count = freq * 2 -we use a pin change interrupt, so the pin changes two times per wave cycle
   globalTicks = 0;
   Count = 0;
   while (globalTicks < 125);  //eigth of a second
-  if (Count > (target >> 2)) found = true;
+  if (Count > (target >> 2)) found = true; //divide target freq by 4; not by eight, because count is two times the input frequency 
   tested = true;
 }
 
