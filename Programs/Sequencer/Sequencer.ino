@@ -44,9 +44,15 @@ MODES OF OPERATION
       -Connect the sequencer's I/O 3 to the oscillator's I/O 1 or 2 (sequencer calibration input to oscillator frequency output)
       -Connect the sequencer's I/O 4 to the oscillator's I/O 4      (sequencer gate output to oscillator volume output)
       -Turn the sequencer's knob all the way counter-clockwise and make sure the arrow in the shaft points at the button (if it doesn't, remove the shaft and put it back in place with the arrow pointing at the button)  
-      -Turn the sequencer's knob halfway (arrow pointing at I/O 4)
-    -Click the sequencer module's button two or three times to start the calibration procedure in the sequencer 
-    -Start the oscillator calibration procedure (refer to oscillator manual on how to set it up) 
+      -Turn the SEQUENCER'S knob HALFWAY (arrow pointing at the positive pin in I/O 4)
+      -Turn the OSCILLATOR'S knob ALL THE WAY counter-clockwise
+      -Set the OSCILLATOR'S frequency range to the middle (this is the default when you turn it ON)
+      -Set the OSCILLATOR´S wave form to square (third waveform) -this is optional but may improve results
+    -Start calibration procedure in the SEQUENCER:
+        -Click the sequencer module's button two or three times 
+    -Start calibration procedure in the OSCILLATOR: 
+        -Click the oscillator module's button THREE times 
+    -Calibration now Starts:
       -A series of high and low beeps are heard; this calibrates the oscillator module
       -A rising pitch is heard; this calibrates the sequencer module
     -When the pitch stops rising, calibration is finished 
@@ -153,7 +159,7 @@ void setup() {
   cli();                               // Interrupts OFF (disable interrupts globally)
   
   //PWM Generation -timer 1
-  GTCCR  = (1<<PWM1B)|(1<<COM1B1);    //PWM, output on pb1, compare with OCR1B, reset on match with OCR1C
+  GTCCR  = (1<<PWM1B)|(1<<COM1B1);    //PWM, output on pb4, compare with OCR1B, reset on match with OCR1C
   OCR1C  = 0xff;
   TCCR1  = (1<<CS10);                 // no prescale
 
