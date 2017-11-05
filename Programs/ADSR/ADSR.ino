@@ -62,7 +62,7 @@ const int attackLevel = 255;
 int ADSR[] = {
   0,   //attackLength
   1,   //decayLength  
-  0,   //sustainLevel
+  255,   //sustainLevel
   0   //releaseLength 
 };
   
@@ -94,7 +94,7 @@ void setup() {
   cli();                               // Interrupts OFF (disable interrupts globally)
   
   //PWM Generation -timer 1
-  GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb1, compare with OCR1B, reset on match with OCR1C
+  GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb4, compare with OCR1B (see interrupt below), reset on match with OCR1C
   OCR1C  = 0xff;                         //255
   TCCR1  = (1 << CS10);                  // no prescale
   
@@ -171,20 +171,20 @@ void manualTrigger() {
    readR();
 }
 
-void triggerADSR() {                      //triggers the reading of the envelope when it receives a pulse in the designated input   
+void triggerADSR() {                      //triggers the envelope when it receives a pulse in the designated input   
   
-  if (digitalRead(2) == HIGH) { 
-    readyToRelease = true;  
-    if (readyToAttack){
-      readADS();
+  if (PINB & 0x04) {                    //Reads button (digital input1, the third bit in register PINB. We check the value with & binary 100, so 0x04). digitalRead(2) = HIGH 
+    if (readyToAttack){ 
       readyToAttack = false;
+      readyToRelease = true;
+      readADS();
     }
   }  
-  if (digitalRead(2) == LOW) {
-    readyToAttack = true;
+  else{
     if (readyToRelease){
-      readR();
+      readyToAttack = true;
       readyToRelease = false;
+      readR();
     }
   }  
 }
@@ -198,7 +198,7 @@ void readADS() {
   if (attackLength == 0) OCR1B = attackLevel;
   else {
     globalTicks = 0;
-    for (envelopeValue = 0; envelopeValue <= 255; ){                
+    for (envelopeValue = 0; envelopeValue <= 255; ){    
       OCR1B = envelopeValue;  
       if (globalTicks == attackLength) {
         envelopeValue++;
@@ -208,7 +208,7 @@ void readADS() {
   }
   //DECAY                                                
   globalTicks = 0;
-  if (decayLength == 0) OCR1B = sustainLevel;
+  if ((decayLength == 0) || (sustainLevel == attackLevel)) OCR1B = sustainLevel;
   else{
     if (sustainLevel < attackLevel){
       for (envelopeValue = attackLevel; envelopeValue >= sustainLevel; ){   
@@ -218,9 +218,6 @@ void readADS() {
         globalTicks = 0;
         } 
       }
-    }
-    else if (sustainLevel == attackLevel){
-        OCR1B = envelopeValue;
     }
   }
   //SUSTAIN --nothing to do, we keep the last value until the "note off" trigger
@@ -235,8 +232,11 @@ void readR() {
   else {
     OCR1B = sustainLevel;
     globalTicks = 0;
-    
     for (envelopeValue = sustainLevel; envelopeValue >= 0;){
+     if (PINB & 1 << 2){                                       //if during R stage there's a trigger, silence and exit
+       OCR1B = 0;
+       return;
+     }
      OCR1B = envelopeValue;
        if (globalTicks == releaseLength) {
          envelopeValue--;
@@ -244,7 +244,6 @@ void readR() {
        }   
     }
   }
-  OCR1B = 0;
 }
 
 void checkButton() {
@@ -270,7 +269,7 @@ void checkButton() {
           additionalClicks++;                                              //if we press the button and we were not pressing it before, that counts as a click
         }
         
-        if (button_delay_b == 500) {
+        if (button_delay_b == 400) {
           if (additionalClicks == 0){           
             if (beenLongPressed) {                    //button released after being pressed for a while (most likely because we were changing the volume)
               beenLongPressed = false;
@@ -354,9 +353,9 @@ void flashLEDFast(int times) {
 
 void flashLEDSlow(int times) {
   for (int i = 0; i < times; i++){
-    _delay_ms(150);
+    _delay_ms(100);
     digitalWrite(0, LOW);
-    _delay_ms(150);
+    _delay_ms(100);
     digitalWrite(0, HIGH);
   }
 }
