@@ -96,7 +96,7 @@ void setup() {
   cli();                               // Interrupts OFF (disable interrupts globally)
 
   //PWM Generation -timer 1
-  GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb1, compare with OCR1B (see interrupt below), reset on match with OCR1C
+  GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb4, compare with OCR1B (see interrupt below), reset on match with OCR1C
   OCR1C  = 0xff;
   TCCR1  = (1 << CS10);                  // no prescale
 
@@ -105,9 +105,9 @@ void setup() {
   TCCR0B = (1 << CS00);                    // no prescale (source: internal clock)
   TIMSK = (1 << TOIE0);                    // Enable Interrupt on overflow, triggered at 31.2KHz (8Mhz / 256 steps per overflow)
 
-  //Pin interrupt Generation
-  GIMSK |= (1 << PCIE);                  // Enable Pin Change Interrupt
-  PCMSK |= (1 << PCINT1);                // on pin 1
+  //Pin Change Interrupt
+  GIMSK |= (1 << PCIE);    // Enable 
+  PCMSK |= (1 << PCINT1);  // on pin 1
   
   sei();                               // Interrupts ON (enable interrupts globally)
   

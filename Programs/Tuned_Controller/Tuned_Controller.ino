@@ -123,9 +123,9 @@ void setup() {
   OCR1C  = 0xff;                         // 255
   TCCR1  = (1 << CS10);                  // no prescale
 
-  GIMSK = (1 << PCIE);    // Enable Pin Change Interrupt
-  PCMSK = (1 << PCINT1);  // on pin 1
-
+  //Pin Change Interrupt
+  GIMSK |= (1 << PCIE);    // Enable 
+  PCMSK |= (1 << PCINT1);  // on pin 1
 
   //Timer Interrupt Generation -timer 0
   TCCR0A = (1 << WGM01);               //Clear Timer on Compare (CTC) with OCR0A
