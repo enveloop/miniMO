@@ -101,7 +101,7 @@ void setup()
   cli();                               // Interrupts OFF (disable interrupts globally)
 
   //PWM Generation -timer 1
-  GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb1, compare with OCR1B (see interrupt below), reset on match with OCR1C
+  GTCCR  = (1 << PWM1B) | (1 << COM1B1); // PWM, output on pb4, compare with OCR1B (see interrupt below), reset on match with OCR1C
   OCR1C  = 0xff;                         // 255
   TCCR1  = (1 << CS10);                  // no prescale
 
@@ -156,7 +156,7 @@ void setTempo() {
   if (tempoChange) {
     tempoReading = analogRead(3); 
     tempoCoarse = tempoReading >> 4;                //right shifting by 4 to get values between 0 and 63 (0-1023/2^4). Less resolution makes it easier to track
-    tempo = tempoReading << 2;                            
+    tempo = tempoReading << 2;                      //Here we decide what's the actual tempo.The max value is 1023 << 2      
   }
   else if ((analogRead(3) >> 4) == tempoCoarse) {    //check control input against stored value. If the value is the same (because we have moved the knob to the last known position for that parameter),
       tempoChange = true;                            //it is ok to change the value :)
