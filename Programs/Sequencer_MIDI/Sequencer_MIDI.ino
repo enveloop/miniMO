@@ -76,7 +76,7 @@ const byte PROGMEM midiChannel = 1;                           //midi channel
 const byte PROGMEM noteVelocity = 100;                        //default note velocity
 const byte PROGMEM maxSteps = 6;                              //number of steps in the sequence
 
-const int PROGMEM targetNotesArrayLength = 9;                 //number of values in the target notes array
+const int PROGMEM targetNotesArrayLength = 9;                 //number of items in the target notes array
 const int PROGMEM targetNotes[targetNotesArrayLength] =       //we store them in program memory to avoid using too much dynamic memory if the array is long
 {  
   52,55,59,60,64,67,71,72,76,                                 //THESE ARE THE MIDI NOTES WE'LL USE IN THE SEQUENCES

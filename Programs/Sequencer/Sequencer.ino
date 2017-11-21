@@ -32,7 +32,7 @@ MODES OF OPERATION
       -miniMO waits until you reach the value it has currently stored
     -Single click: go to PLAY mode 
     -Double click: change note length
-      -Three note lengths are possible: half(staccato), silence, and full(legato), in this order
+      -Three note lengths are possible: half(staccato), full(legato), and silence, in this order
       -By default, the notes are set to half
       -Full notes don't send a "note off" signal. This is most useful in combination with the envelope module
     -The LED stays ON continuously 
@@ -79,19 +79,20 @@ MODES OF OPERATION
   When you switch the module ON,
     -If the LED blinks once, the battery is OK
     -If the LED blinks fast several times, the battery is running low
+    
+  NOTES
+  The module's "wait until the knob reaches the last stored value" behavior might be a bit unresponsive at low tempos
 */
 
 #include <avr/io.h>
 #include <avr/eeprom.h>
 #include <util/delay.h>
 
-bool noteChange = false;
-bool tempoChange = false;
-
-volatile unsigned int globalTicks = 0;
-
 //button interrupt
 volatile bool inputButtonValue;
+
+//timer interrupt
+volatile unsigned int globalTicks = 0;
 
 //button press control
 int button_delay;
@@ -100,44 +101,49 @@ bool beenDoubleClicked = false;
 bool beenLongPressed = false;
 int additionalClicks = 0;      //variable to see how many times we click after the first
 
+//parameter change control
+bool noteChange = false;
+bool tempoChange = false;
+
 //calibration data
-/*
-const int PROGMEM arrayLength = 37; 
-const int PROGMEM targetFrequencies[arrayLength] = {  //int array, so we read it with pgm_read_word_near(targetFrequencies + j) later on
-  110,  117,  123, 131,  139,  147,  156,  165,  175,   
-  185,  196,  208, 220,  233,  247,  262,  277,  294,       
-  311,  330,  349, 370,  392,  415,  440,  466,  494,         
-  523,  554,  587, 622,  659,  698,  740,  784,  831,  880 //chromatic A2 to A5
-};
-*/
-const int PROGMEM arrayLength = 13; 
-const int PROGMEM targetFrequencies[arrayLength] = {  //int array, so we read it with pgm_read_word_near(targetFrequencies + j) later on
-  110, 147, 165, 196,  
-  220, 294, 330, 392,      
-  440, 587, 659, 784, 880 //tetratonic A2 to A5
-};
-
-int calibratedFrequencies[arrayLength];
-
 bool calibrating = false;
 volatile unsigned long Count;
 bool found = false;
 bool tested = false;
 
+//USER EDITING ENCOURAGED
+//////////////////////////////////////////
+const int PROGMEM arrayLength = 13;                   //number of items in the target frequencies array
+const int PROGMEM targetFrequencies[arrayLength] = {  //int array, so we read it with pgm_read_word_near(targetFrequencies + j) later on
+  110, 147, 165, 196,  
+  220, 294, 330, 392,                                 //THESE ARE THE FREQUENCIES WE'LL USE IN THE SEQUENCES
+  440, 587, 659, 784, 880                             //tetratonic A2 to A5       
+};
+
+/*
+const int PROGMEM arrayLength = 37;                         //number of items in the target frequencies array
+const int PROGMEM targetFrequencies[arrayLength] = {        //int array, so we read it with pgm_read_word_near(targetFrequencies + j) later on
+  110,  117,  123, 131,  139,  147,  156,  165,  175,   
+  185,  196,  208, 220,  233,  247,  262,  277,  294,       
+  311,  330,  349, 370,  392,  415,  440,  466,  494,       //THESE ARE THE FREQUENCIES WE'LL USE IN THE SEQUENCES  
+  523,  554,  587, 622,  659,  698,  740,  784,  831,  880  //chromatic A2 to A5
+};
+*/
+//////////////////////////////////////////
+int calibratedFrequencies[arrayLength];
+
 //sequencer data
-const byte PROGMEM maxSteps = 4;             //this parameter sets the number of steps in the sequence
-const byte PROGMEM stepParams = 2;           //parameters: note-length
-bool play = true;
-
-const int totalStepInfos = (maxSteps * stepParams); //all the parameters in all the steps
-
-int stepInfo[totalStepInfos]; //array to hold all those parameters
-
-int currentStep = 0;
-
-int tempo = 120;   //bpm
+int tempo = 120;                                    //bpm
 const int PROGMEM minTempo = 60;
 unsigned int stepDelay = 7500/tempo;
+
+const byte PROGMEM maxSteps = 4;                    //this parameter sets the number of steps in the sequence - USER EDITING ENCOURAGED
+const byte PROGMEM stepParams = 2;                  //parameters: note-length
+const int totalStepInfos = (maxSteps * stepParams); //all the parameters in all the steps
+int stepInfo[totalStepInfos];                       //array to hold all those parameters
+
+bool play = true;
+int currentStep = 0;
 
 void setup() {
   
@@ -305,22 +311,6 @@ void sendStep(int currentStep){
   }
 }
 
-void setNoteLength() {
-  int currentStepLength = stepInfo[(currentStep * stepParams) + 1];
-  switch (currentStepLength) {
-    case 0:
-      digitalWrite(0, HIGH);
-      stepInfo[(currentStep * stepParams) + 1] = 255;
-      break;
-    case 127:
-      stepInfo[(currentStep * stepParams) + 1] = 0;
-      break;
-    case 255:
-      stepInfo[(currentStep * stepParams) + 1] = 127;
-      break;  
-  } 
-}
-
 void setTempo(int pin) {
   noteChange = false;
   int tempoRead = analogRead(pin) + minTempo;    
@@ -368,6 +358,22 @@ int noteMap(int note){ //returns the closest calibrated value
     result = calibratedFrequencies[i];
    }
   return result;
+}
+
+void setNoteLength() {
+  int currentStepLength = stepInfo[(currentStep * stepParams) + 1];
+  switch (currentStepLength) {
+    case 0:
+      digitalWrite(0, HIGH);
+      stepInfo[(currentStep * stepParams) + 1] = 127;
+      break;
+    case 127:
+      stepInfo[(currentStep * stepParams) + 1] = 255;
+      break;
+    case 255:
+      stepInfo[(currentStep * stepParams) + 1] = 0;
+      break;  
+  } 
 }
 
 void checkButton() {
