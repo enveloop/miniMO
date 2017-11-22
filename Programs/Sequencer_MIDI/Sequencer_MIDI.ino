@@ -16,25 +16,25 @@ I/O
 
 MODES OF OPERATION
   PLAY (default)
-  The sequencer plays through all the steps. The LED turns ON and OFF to mark each step.
+  The sequencer plays through all the steps. The LED turns ON and OFF to mark each step
     -Knob: change tempo / transpose pattern
        -when you hop between parameters, miniMO waits until you reach the last value it has currently stored to start effecting changes
     -Single click: go to EDIT mode
       -To edit a step, click the button during the PREVIOUS step
       -The pattern freezes in the step after you click, which becomes ready to edit
     -Double click: change play mode between regular and reverse
-    -Triple click: change the number of octaves 
-    -Click and Hold (hold for about 1s): change knob's function between tempo and transposition 
+    -Triple click: change the number of octaves the pattern is played across 
+    -Click and Hold (hold for about 1s): change knob's function between tempo / transposition control 
     
   Each time you turn the module OFF and ON, miniMO plays a new random sequence
   
   EDIT 
-  The sequencer repeats the current step indefinitely at the tempo set in PLAY mode. The LED stays ON continuously.
+  The sequencer repeats the current step indefinitely at the tempo set in PLAY mode. The LED stays ON continuously
     -Knob: change note  
       -miniMO waits until you reach the note it has currently stored to start effecting changes
     -Single click: go to PLAY mode 
     -Double click: change note length between half (staccato), full (legato), and silence, in this order
-      -By default, the notes are set to half
+      -By default, the first note is set to full (to mark the beginning of the pattern), and the other notes are set to half
    
   BATTERY CHECK
   When you switch the module ON,
@@ -42,10 +42,11 @@ MODES OF OPERATION
     -If the LED blinks fast several times, the battery is running low
     
   NOTES&TROUBLESHOOTING
+  This program requires a modified version of SoftwareSerial to run
   The module's "wait until the knob reaches the last stored value" behavior might be a bit unresponsive at low tempos      
 */
 
-#include <SoftwareSerial.h>
+#include <SoftwareSerialminiMO.h>  //get this library at https://github.com/enveloop/miniMO/tree/master/Libraries
 #include <avr/io.h>
 #include <avr/eeprom.h>
 #include <util/delay.h>
@@ -103,7 +104,7 @@ byte playOctave = 0;
 byte limitOctave = 0;  
 
 const byte transposeModifierBaseDefault = 3; 
-byte transposeModifierBase = transposeModifierBaseDefault;  //reading from potentiometer. By default is 3, later read as the 4th value in transposeValues[], which gives no transposition.
+byte transposeModifierBase = transposeModifierBaseDefault;  //reading from potentiometer. By default is 3, the 4th value in transposeValues[], which gives no transposition.
 byte transposeModifier = 0;                                 //transposition interval derived from applying the pot reading to a table of intervals
 
 int currentStep = 0;
@@ -473,7 +474,8 @@ void initSteps(int address){  //initialize steps' info to random notes
     int note = pgm_read_word_near(targetNotes + randomValue);  //retrieve the note in the chosen index          
     
     stepInfo[i * stepParams] =  note;                         //assign the note to the step in the sequence
-    stepInfo[(i * stepParams) + 1 ] = 127;                    //all half notes
+    if (i == 0) stepInfo[ 1 ] = 255;        //the first note gets full length to mark the beginning of the pattern
+    else stepInfo[(i * stepParams) + 1 ] = 127;               //all the other notes are all half notes
   }
   eeprom_update_word((uint16_t*)address, rSeed);              //save the seed we used
 }
