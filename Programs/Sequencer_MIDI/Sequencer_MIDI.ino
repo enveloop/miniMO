@@ -10,6 +10,12 @@
    http://creativecommons.org/licenses/by/4.0/
 //
 
+MIDI OUT CABLE: https://www.midi.org/specifications/item/midi-din-electrical-specification
+
+Resistors: 10Ω(data, pin5), 33Ω(power, pin4)
+
+//
+
 I/O
   2: Output - MIDI notes
   4: Output - gate (note ON/OFF)
