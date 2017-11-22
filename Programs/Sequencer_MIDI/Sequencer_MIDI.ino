@@ -42,7 +42,7 @@ MODES OF OPERATION
     -If the LED blinks fast several times, the battery is running low
     
   NOTES&TROUBLESHOOTING
-  This program requires a modified version of SoftwareSerial to run
+  This program requires a modified version of SoftwareSerial to run (see below)
   The module's "wait until the knob reaches the last stored value" behavior might be a bit unresponsive at low tempos      
 */
 
