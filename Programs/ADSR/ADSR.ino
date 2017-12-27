@@ -343,15 +343,6 @@ void checkVoltage() {                   //voltage from 255 to 0; 46 is (approx)5
     flashLED(1, 250);
 }
 
-void flashLEDFast(int times) {
-  for (int i = 0; i < times; i++){
-    _delay_ms(100);
-    digitalWrite(0, LOW);
-    _delay_ms(100);
-    digitalWrite(0, HIGH);
-  }
-}
-
 void flashLEDSlow(int times) {
   for (int i = 0; i < times; i++){
     _delay_ms(100);
