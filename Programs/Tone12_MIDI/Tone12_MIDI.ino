@@ -24,7 +24,7 @@ I/O
 MODES OF OPERATION
   PLAY (default)
   The sequencer plays through all the steps. The LED turns ON and OFF to mark each step
-    -Knob: change tempo / transpose pattern
+    -Knob: change tempo
        -when you hop between parameters, miniMO waits until you reach the last value it has currently stored to start effecting changes
     -Single click: go to EDIT mode
       -To edit a step, click the button during the PREVIOUS step
