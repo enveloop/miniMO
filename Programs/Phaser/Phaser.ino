@@ -192,8 +192,8 @@ void variableDelay(int us) {
 void setParameter() {
   if (parameterChange) parameters[currentParameter] = controlInput;
   
-  else if (controlInput == parameters[currentParameter]) {  //check control input against stored value. If the value is the same (because we have moved the knob to the last known position for that parameter),
-      parameterChange = true;                               //it is ok to change the value :)
+  else if ((controlInput & 0xF0) == (parameters[currentParameter] & 0xF0) ) {  //checks the control input against stored value. & 0xF0 is a mask to ignore the lower bits and use less resolution (works better)  
+      parameterChange = true;                                                  //If the value is the same (because we have moved the knob to the last known position for that parameter),it is ok to change the value :)
   }
 }
 
