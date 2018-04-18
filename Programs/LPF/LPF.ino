@@ -154,12 +154,11 @@ void loop() {
 }
 
 void setParameter() {                                                //wait until we reach the latest value stored for that parameter, then start controlling it again
-  if((controlInput >> 4) == (parameters[currentParameter] >> 4)){    //>>4, so we track 15 reference positions. This makes it easier to pick it up.   
-      parameterChange = true;
-   }
-   if(parameterChange){ 
-     parameters[currentParameter] = controlInput;
-   }
+  if (parameterChange) parameters[currentParameter] = controlInput;
+  
+  else if ((controlInput & 0xF0) == (parameters[currentParameter] & 0xF0) ) {  //checks the control input against stored value. & 0xF0 is a mask to ignore the 4 lower bits and use less resolution (works better)  
+      parameterChange = true;                                                  //If the value is the same (because we have moved the knob to the last known position for that parameter),it is ok to change the value :)
+  }
 }
 
 void checkButton() {
