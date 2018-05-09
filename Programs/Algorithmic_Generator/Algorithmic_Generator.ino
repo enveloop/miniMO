@@ -8,6 +8,10 @@ Based on the RCArduino Algorithmic Music code by Duane Banks,
  as described Here:
 http://rcarduino.blogspot.com.es/2012/09/algorithmic-music-on-arduino.html
  
+Also uses the xorshift pseudorandom number generator,
+ as described Here:
+http://www.arklyffe.com/main/2010/08/29/xorshift-pseudorandom-number-generator/ 
+ 
 I/O
   1&2: Outputs 
   3: Input - parameter modulation
@@ -129,7 +133,7 @@ void loop() {
   setParameter();
 }
 
-void algo(int currentAlgo) { // Algorithms by enveloop, based on previous work by Viznut, Tejeez & al (see sources below)
+void algo(int currentAlgo) { // 0 - 3: Algorithms by enveloop, based on previous work by Viznut, Tejeez & al (see sources below)
   switch (currentAlgo) {
     case 0:
       sample = t*(t>>parameters[0]) ^ (t<<parameters[1] ^ t); // 14-8-1
@@ -147,11 +151,17 @@ void algo(int currentAlgo) { // Algorithms by enveloop, based on previous work b
       sample = t&(t>>parameters[0])>>parameters[1]; // 
       t = t + parameters[2];
       break;
+    case 4:                           // xorshift noise
+      t ^= (t << parameters[0]);
+      t ^= (t >> parameters[1]);
+      sample ^= (t << parameters[2]); // 2-5-3
+      if (t == 0) t = 1;              // avoids "extinguishing the noise"
+      break;
   }
 }
 
 void initializeAlgoParameters(int currentAlgo) {
-  t = 0;
+  t = 1;                             // for case 4, noise, with needs it initialized to 1
   currentParameter = 0;
   switch (currentAlgo) {
     case 0:
@@ -173,6 +183,11 @@ void initializeAlgoParameters(int currentAlgo) {
       parameters[0] = 2;
       parameters[1] = 8;
       parameters[2] = 1;
+      break;
+    case 4:
+      parameters[0] = 2;
+      parameters[1] = 5;
+      parameters[2] = 3;
       break;
   }
 }
@@ -215,7 +230,7 @@ void checkButton() {
         }   
         else {                         // more than one click
           currentAlgo++;
-          if (currentAlgo == 4) currentAlgo = 0; 
+          if (currentAlgo == 5) currentAlgo = 0; 
           initializeAlgoParameters(currentAlgo);
           flashLEDSlow(1); 
           additionalClicks = 0;        
