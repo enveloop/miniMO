@@ -206,6 +206,7 @@ void sendStepInPause(int currentStep) {                                 //EDIT M
       checkButton();
     } 
   }
+  
   if (currentStepLength == 255){                 //full note
     digitalWrite(2, HIGH);                       //send external trigger
     playNote(currentStepNote);
@@ -216,6 +217,7 @@ void sendStepInPause(int currentStep) {                                 //EDIT M
     } 
     stopNote(currentStepNote);
   }
+  
   else if (currentStepLength == 127) //half note
   {    
     this_delay = stepDelay >> 1;                 //same as stepDelay / 2^1 but more efficient
@@ -248,48 +250,57 @@ void sendStep(int currentStep)                  //PLAY MODE - sends the current 
   unsigned int this_step; 
   
   digitalWrite(0, HIGH);                       //turn LED ON to mark the step (even if there's a silence)
+  digitalWrite(2, HIGH);                       //turn external trigger ON (follows the main LED)
   
   if (currentStepLength == 0)                  //silence
   {     
-    digitalWrite(2, LOW);                      //cut external trigger
     while ((globalTicks - this_step) < stepDelay)
     {
       checkButton();
       if (!transposeMode) setTempo(3);
       else setTransposeBase(3);
-      if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW); //turn LED OFF
+      if (globalTicks == ticksToLEDOff) 
+      {
+        digitalWrite(0, LOW); //turn LED OFF
+        digitalWrite(2, LOW); //turn ext OFF
+      }
     } 
   }
   else if (currentStepLength == 255)           //full note 
   {
-    digitalWrite(2, HIGH);                     //send external trigger
     playNote(currentStepNote);
     while ((globalTicks - this_step) < stepDelay)
     {
       checkButton();
       if (!transposeMode) setTempo(3);
       else setTransposeBase(3);
-      if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW); //turn LED OFF
+      if (globalTicks == ticksToLEDOff)
+      {
+        digitalWrite(0, LOW); //turn LED OFF
+        digitalWrite(2, LOW); //turn ext OFF
+      }
     }
     stopNote(currentStepNote);
   }
   else if (currentStepLength == 127)            //half note
   {
     this_delay = stepDelay >> 1;                //same as stepDelay / 2^1 but more efficient
-    
     this_step = globalTicks;
-    digitalWrite(2, HIGH);                      //send external trigger
+
     playNote(currentStepNote);    
     while ((globalTicks - this_step) < this_delay)
     {
       checkButton(); 
       if (!transposeMode) setTempo(3);
       else setTransposeBase(3);                           
-      if (globalTicks == ticksToLEDOff) digitalWrite(0, LOW);    //turn LED OFF
+      if (globalTicks == ticksToLEDOff)
+      {
+        digitalWrite(0, LOW);    //turn LED OFF
+        digitalWrite(2, LOW); //turn ext OFF
+      }
     }
     this_step = globalTicks;
     stopNote(currentStepNote);
-    digitalWrite(2, LOW);                                        //cut external trigger
     while ((globalTicks - this_step) < (stepDelay - this_delay)) 
     {
       checkButton();
@@ -480,7 +491,7 @@ void initSteps(int address){  //initialize steps' info to random notes
     int note = pgm_read_word_near(targetNotes + randomValue);  //retrieve the note in the chosen index          
     
     stepInfo[i * stepParams] =  note;                         //assign the note to the step in the sequence
-    if (i == 0) stepInfo[ 1 ] = 255;        //the first note gets full length to mark the beginning of the pattern
+    if (i == 0) stepInfo[ 1 ] = 255;                          //the first note gets full length to mark the beginning of the pattern
     else stepInfo[(i * stepParams) + 1 ] = 127;               //all the other notes are all half notes
   }
   eeprom_update_word((uint16_t*)address, rSeed);              //save the seed we used
