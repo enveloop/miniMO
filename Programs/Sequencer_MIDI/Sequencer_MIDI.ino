@@ -1,7 +1,7 @@
 /*
 //*****************************
 //*   miniMO MIDI SEQUENCER   *
-//*     2017 by enveloop      *
+//*     2017-18 by enveloop   *
 //*****************************
 //
    http://www.minimosynth.com/
@@ -18,13 +18,26 @@ Resistors: 10Ω(data, pin5), 33Ω(power, pin4)
 
 I/O
   2: Output - MIDI notes
-  4: Output - gate (note ON/OFF)
+  4: Output (master) / Input (slave) - gate trigger
+
+MODES OF TRIGGERING
+  MASTER (default)
+  The sequencer sends a trigger every step through I/O 4, also during editing
+  
+  SLAVE
+  The sequencer advances a step when it detects a trigger through I/O 4
+    -To set the sequencer to Slave Mode, turn the module ON while pressing the button, and release the button after the battery check 
+       -The LED turns OFF -now the mopdule is waiting for a trigger
+    -All regular functions are available in Slave Mode
+       -Tempo Control is also available 
+          -The unit will send MIDI notes at the internal tempo, if it's slowest than the external 
+          -The internal tempo also determines the note length (very fast internal tempos produce shorter notes)    
 
 MODES OF OPERATION
   PLAY (default)
   The sequencer plays through all the steps. The LED turns ON and OFF to mark each step
     -Knob: change tempo / transpose pattern
-       -when you hop between parameters, miniMO waits until you reach the last value it has currently stored to start effecting changes
+       -When you hop between parameters, miniMO waits until you reach the last value it has currently stored to start effecting changes
     -Single click: go to EDIT mode
       -To edit a step, click the button during the PREVIOUS step
       -The pattern freezes in the step after you click, which becomes ready to edit
@@ -49,7 +62,8 @@ MODES OF OPERATION
     
   NOTES&TROUBLESHOOTING
   This program requires a modified version of SoftwareSerial to run (see below)
-  The module's "wait until the knob reaches the last stored value" behavior might be a bit unresponsive at low tempos      
+  The module's "wait until the knob reaches the last stored value" behavior might be a bit unresponsive at low tempos
+  In Slave mode, very fast rates will be ignored  
 */
 
 #include <SoftwareSerialminiMO.h>  //get this library at https://github.com/enveloop/miniMO/tree/master/Libraries
@@ -115,6 +129,10 @@ byte transposeModifier = 0;                                 //transposition inte
 
 int currentStep = 0;
 
+bool slave = 0;
+bool readyToRetrigger = 0;
+int val = 0;
+
 void setup() 
 {  
   PRR = (1 << PRUSI);                  //disable USI to save power as we are not using it
@@ -122,14 +140,14 @@ void setup()
  
   pinMode(0, OUTPUT); //LED
   pinMode(4, OUTPUT); //Note output
+  pinMode(2, OUTPUT); //Note output
   pinMode(3, INPUT);  //Speed input/ Note input during editing
-  pinMode(2, OUTPUT); //Gate output
   pinMode(1, INPUT);  //Digital input (push button)
   
   checkVoltage();
   ADMUX = 0;                           //reset multiplexer settings
   
-  cli();                                 // Interrupts OFF (disable interrupts globally)
+  cli();                               // Interrupts OFF (disable interrupts globally)
   
   //Pin interrupt Generation
   GIMSK |= (1<<PCIE);                  // Enable Pin Change Interrupt 
@@ -141,10 +159,25 @@ void setup()
   OCR0A = 0xfa;                        //0xfa = 250 //125hz https://www.easycalculation.com/engineering/electrical/avr-timer-calculator.php
   TIMSK = (1 << OCIE0A);               // Enable Interrupt on compare with OCR0A
   
-  initSteps(500);                      //initialize step information
+  initSteps(500);                      //initialize step information -500 is the memory address for the random seed
   
   sei();
-  
+
+  //Start as MIDI master or Slave
+  if (digitalRead(1) == HIGH) {                            //If we are pressing the button
+    digitalWrite(0, HIGH);                                 //LED ON
+    _delay_ms(2000);                                      
+    digitalWrite(0, LOW);
+    if (inputButtonValue == 0) {
+      slave = 1;                //If we released the button, set Slave mode
+      pinMode(2, INPUT);        //Gate input (slave)
+    }
+  }
+  else {                                                   
+    slave = 0;                  //master mode
+    pinMode(2, OUTPUT);         //Gate output (master)
+  }
+
   midiSerial.begin(31250);
 }
 
@@ -158,81 +191,74 @@ ISR(TIMER0_COMPA_vect) {            //Timer0 interruption
 }
 
 void loop() {
-  sendSequence();
+  sequence();
 }
 
-void sendSequence() {
+void sequence() {
   if (play) {
     stepDelay = 7500/tempo;                                            //we set the new tempo during the step, but we only apply the setting after the step -otherwise the division grinds everything to a halt
-    sendStep(currentStep); 
-    if (playReverse == false) {
-      currentStep++;
-      if (currentStep == maxSteps) {                                   //when we reach the end of the sequence
-        currentStep = 0;                                               //reset step number 
-        transposeModifier = transposeValues[transposeModifierBase];    //apply transposition (we avoid transposing in the middle of a pattern)
-        playOctave++;                                                  //add octave  
-        if (playOctave > limitOctave) playOctave = 0;                   //if we reached the maximum octave, reset octave  
-      }
-    }
-    else if (playReverse == true) {
-      currentStep--;
-      if (currentStep < 0) {
-        currentStep = maxSteps - 1;
-        transposeModifier = transposeValues[transposeModifierBase];
-        playOctave++;
-        if (playOctave > limitOctave) playOctave = 0;
-      }
-    }
+    if (slave) receiveStep(currentStep);
+    else if (!slave) sendStep(currentStep);
   }
   else if(!play) {  
-    sendStepInPause(currentStep);
+    if (slave) receiveStepInPause(currentStep);
+    else if (!slave) sendStepInPause(currentStep);
   }
 }
 
-void sendStepInPause(int currentStep) {                                 //EDIT MODE - sends the selected step continuously for editing
+void sendStepInPause(int currentStep) {                                  //EDIT MODE - sends the selected step continuously for editing
   globalTicks = 0;
+  int ticksToExtOff = 5;
   int currentStepNote = stepInfo[(currentStep * stepParams)] + (12 * playOctave) + transposeModifier;
   int currentStepLength = stepInfo[(currentStep * stepParams) + 1];
   int this_delay = stepDelay;
   unsigned int this_step; 
   
   digitalWrite(0, HIGH);                         //turn LED ON
+  digitalWrite(2, HIGH);                         //send external trigger
   
   if (currentStepLength == 0)                    //silence
-  {    
-    digitalWrite(2, LOW);                        //cut external trigger
+  { 
+    digitalWrite(0, LOW);                        //turn LED OFF
     while ((globalTicks - this_step) < stepDelay)
     {
       checkButton();
+      if (globalTicks == ticksToExtOff) 
+      {
+        digitalWrite(2, LOW); //turn ext OFF
+      }
     } 
   }
-  
-  if (currentStepLength == 255){                 //full note
-    digitalWrite(2, HIGH);                       //send external trigger
+  if (currentStepLength == 255) {                 //full note
     playNote(currentStepNote);
     while ((globalTicks - this_step) < stepDelay)
     {
       checkButton();
       setNoteFreq(3);                            //only set frequency here (otherwise multiple click won't work)
+      if (globalTicks == ticksToExtOff) 
+      {
+        digitalWrite(2, LOW); //turn ext OFF
+      }
     } 
     stopNote(currentStepNote);
   }
-  
   else if (currentStepLength == 127) //half note
   {    
     this_delay = stepDelay >> 1;                 //same as stepDelay / 2^1 but more efficient
     
-    this_step = globalTicks;
-    digitalWrite(2, HIGH);                       //send external trigger    
+    this_step = globalTicks;   
     playNote(currentStepNote);    
     while ((globalTicks - this_step) < this_delay)
     {
       checkButton(); 
       setNoteFreq(3);                            //only set frequency here (otherwise multiple click won't work)
+      if (globalTicks == ticksToExtOff) 
+      {
+        digitalWrite(2, LOW); //turn ext OFF
+      }
     }
     this_step = globalTicks;
     stopNote(currentStepNote);
-    digitalWrite(2, LOW);                        //cut external trigger
     while ((globalTicks - this_step) < (stepDelay - this_delay))
     {
       checkButton();
@@ -240,8 +266,7 @@ void sendStepInPause(int currentStep) {                                 //EDIT M
   }
 }
 
-void sendStep(int currentStep)                  //PLAY MODE - sends the current step                                 
-{
+void sendStep(int currentStep) {                  //PLAY MODE - sends the current step                                 
   globalTicks = 0;
   int ticksToLEDOff = 5;                        //ticks after which the LED switches OFF
   int currentStepNote = stepInfo[(currentStep * stepParams)] + (12 * playOctave) + transposeModifier;
@@ -308,6 +333,55 @@ void sendStep(int currentStep)                  //PLAY MODE - sends the current 
       else setTransposeBase(3);
     }
   }
+  advanceStep();
+}
+
+void receiveStep(int currentStep) {
+  val = analogRead(1);
+  if ((val > 700) && (readyToRetrigger == true))
+  {
+    readyToRetrigger = false;
+    sendStep(currentStep);    
+  }
+  else if (val < 700) 
+  {
+    readyToRetrigger = true;
+  }
+}
+
+void receiveStepInPause(int currentStep) {
+  val = analogRead(1);
+  if ((val > 700) && (readyToRetrigger == true))
+  {
+    readyToRetrigger = false;
+    sendStepInPause(currentStep);    
+  }
+  else if (val < 700) 
+  {
+    readyToRetrigger = true;
+  }
+}
+
+void advanceStep()
+{
+    if (playReverse == false) {
+      currentStep++;
+      if (currentStep == maxSteps) {                                   //when we reach the end of the sequence
+        currentStep = 0;                                               //reset step number 
+        transposeModifier = transposeValues[transposeModifierBase];    //apply transposition (we avoid transposing in the middle of a pattern)
+        playOctave++;                                                  //add octave  
+        if (playOctave > limitOctave) playOctave = 0;                   //if we reached the maximum octave, reset octave  
+      }
+    }
+    else if (playReverse == true) {
+      currentStep--;
+      if (currentStep < 0) {
+        currentStep = maxSteps - 1;
+        transposeModifier = transposeValues[transposeModifierBase];
+        playOctave++;
+        if (playOctave > limitOctave) playOctave = 0;
+      }
+    }
 }
 
 void setTempo(int pin) {
@@ -339,7 +413,6 @@ void setTransposeBase(int pin) {
 }
 
 void setNoteFreq(int pin) {
-  digitalWrite(2, HIGH);
   tempoChange = false;
   transposeChange = false;
   int noteRef = stepInfo[(currentStep * stepParams)];
@@ -491,7 +564,7 @@ void initSteps(int address){  //initialize steps' info to random notes
     int note = pgm_read_word_near(targetNotes + randomValue);  //retrieve the note in the chosen index          
     
     stepInfo[i * stepParams] =  note;                         //assign the note to the step in the sequence
-    if (i == 0) stepInfo[ 1 ] = 255;                          //the first note gets full length to mark the beginning of the pattern
+    if (i == 0) stepInfo[ 1 ] = 255;        //the first note gets full length to mark the beginning of the pattern
     else stepInfo[(i * stepParams) + 1 ] = 127;               //all the other notes are all half notes
   }
   eeprom_update_word((uint16_t*)address, rSeed);              //save the seed we used
