@@ -25,7 +25,7 @@ TRIGGER MODES
   The sequencer sends a trigger every step through I/O 4, also during editing
   
   SLAVE
-  The sequencer advances a step when it detects a trigger through I/O 4
+  The sequencer advances a step when it detects a trigger through I/O 4 (tested 3 and 5V)
     -To set the sequencer to Slave Mode, turn the module ON while pressing the button, and release the button after the battery check 
        -The LED turns OFF -now the module is waiting for a trigger
     -All regular functions are available in Slave Mode
