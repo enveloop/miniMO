@@ -47,7 +47,7 @@ NOTES&TROUBLESHOOTING
 
 //button interrupt
 volatile bool inputButtonValue;
-bool control = 1;
+bool controlFrequency = 1;
 
 //random number generator
 static unsigned long y32 = 1;   // pattern length: 32 bit 
@@ -123,8 +123,8 @@ ISR(TIMER0_COMPA_vect) {               // Timer 0 interruption - changes the wid
 ISR(PCINT0_vect) {                       // PIN Interruption - has priority over COMPA; this ensures that the switch will work
   inputButtonValue = PINB & 0x02;        // Reads button (digital input1, the second bit in register PINB. We check the value with & binary 10, so 0x02) 
   if (inputButtonValue) {
-    control = !control;
-    if (control)flashLEDOnce();
+    controlFrequency = !controlFrequency;
+    if (controlFrequency)flashLEDOnce();
     else flashLEDTwice();
   }
 }
@@ -151,7 +151,7 @@ void randomizeMore() {
 }
 
 void randomizeNoise() {               
-  if (control)setFrequency(3);
+  if (controlFrequency)setFrequency(3);
   else setGrainDensity(3);
   randomizeNoiseParams();
 }
