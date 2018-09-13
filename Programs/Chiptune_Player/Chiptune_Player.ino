@@ -1,6 +1,6 @@
 /*
 /**********************************
-/*    miniMO Chiptune Sequencer   *
+/*    miniMO Chiptune Player      *
 /*        2018 by enveloop        *
 /**********************************
 //
