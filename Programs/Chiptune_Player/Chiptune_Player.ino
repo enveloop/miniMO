@@ -11,15 +11,113 @@
    CC BY 4.0
    Licensed under a Creative Commons Attribution 4.0 International license: 
    http://creativecommons.org/licenses/by/4.0/
+//
+I/O
+  1&2: Outputs - sound
+  3: Input - base tempo modulation
+  4: Input - continuous playback ON/OFF
+  
+OPERATION
+  Knob: change tempo modifier
+    -miniMO waits until you reach the value it has currently stored
+  Click: play next tune
+    -IMPORTANT: wait until the LED turns OFF to release button. 
+    -Moving on to the next tune resets any tempo or repeat modifications 
+  Double click: rewind current tune
+    -(You only need to wait until the LED turns off for the first click)
+  Triple Click: rewind the whole playlist and stop
+  Click and Hold: turn autorepeat ON or OFF for the current tune
+    -IMPORTANT: wait until the LED turns ON again to release button 
+  Place a jumper in I/O 4: turn Continuous Playback ON
+    -miniMO plays all the songs in the playlist, and automatically restarts the playlist after the last tune is finished 
+    -Alternatively you can engage this mode placing a small resistor or a finger on the pins, after a small change in the code (see loop())   
 
-Controls:
-Single Click:  play next tune. IMPORTANT: wait until the LED turns off to release button. Resets tempo modifications and repeat settings
-Double click:  rewind current tune. (You only need to wait until the LED turns off for the first click). 
-Triple Click:  rewind the whole playlist and stop.
-Click and Hold )until the LED lights up again): turn autorepeat ON or OFF for the current tune. Resets tempo modifications and repeat settings
-Potentiometer: change tempo modifier.
+TO CHANGE 
+
+BATTERY CHECK
+  When you switch the module ON,
+    -If the LED blinks once, the battery is OK
+    -If the LED blinks fast several times, the battery is running low
 
 */
+
+//                            PLAYLIST SETUP
+//////////////////////////////////////////////////////////////////////////////
+
+PROGMEM const char Clear[] = {"2,^(^^^)"}; //silences all the channels -- DO NOT MODIFY THIS ONE
+
+//////////////////////////////////TUNES///////////////////////////////////////
+
+//The tunes are written in AMPLE Notation. See  http://www.technoblogy.com/show?Q7H for details on the exact imnplementation
+
+PROGMEM const char musScale[] = {
+  "12, 0:CDEFGABCDEFGABCbagfedcbagfed 24, c^"};
+PROGMEM const char Bach[] = {
+  //BACH, Choral BWV153-9 Ach Gott, Wie Manches Herzeleid
+  "12,-1:C(-1:G0:E1:C)-1:C(-1:G0:E^)-1:E(0:C0:G1:C)-1:E(0:C0:G^)-1:c(0:E0:G1:C)-1:c(0:E0:G^) 24,-1:F(0:c0:f0:a)-1:F(0:D0:G0:B)-1:e(0:E0:G1:C)-1:+F(0:d0:A1:D)-1:+F(0:d0:A1:c)-1:G(0:d0:g0:b)-1:d(0:d0:+f0:a)-1:d(0:d0:+f0:a)-1:d(0:d0:+f0:a)^(^^^)"
+  "24,-1:D(0:d0:+F0:A)-1:G(0:d0:G0:B)-1:e(0:E0:G1:C)-2:b(0:d0:G1:D)-2:b(0:d0:G1:D)-1:C(0:E0:G1:c)-1:G(0:d0:G0:b)-1:d(0:d0:G0:a)12,-1:d(0:d0:+F0:a)-1:d(0:c0:+F0:a)24,-2:g(-1:b0:g0:g)-2:g(-1:b0:g0:g)-2:g(-1:b0:g0:g)^(^^^)"
+  "12,0:C(0:C0:G1:E)0:C(0:C0:G^) -1:+G(-1:b0:e1:E)-1:+G(-1:b0:e^) -1:e(0:E0:+G1:E)-1:e(0:E0:+G^) 24, -1:A(0:E0:A1:c)-1:A(0:F0:B1:D)-2:a(0:G1:+C1:E)-1:D(0:f1:D1:F)-1:E(0:G1:c1:e)-1:F(0:c1:c1:e)-1:G(-1:b0:G1:d)-1:G(-1:b0:G1:d)-1:G(-1:b0:G1:d)^(^^^)"
+  "24,-1:E(0:C0:G1:C)-1:d(-1:f0:B1:D)-1:c(-1:G0:C1:E)-1:F(-1:A0:C1:d)-1:G(-1:B0:b1:d) 32, -1:A(0:C0:e1:c) 4, ^(^^^) 24,-1:+f(0:d0:A1:c)-1:G(0:d0:g0:b)-2:g(0:d0:g0:b)-1:C(0:E0:G1:C)-1:C(0:E0:G1:C)-1:C(0:E0:G1:C)^(^^^)"};
+PROGMEM const char Tuplets[] = {
+  "24,0:C(G)D(A) 12,0:C(G)D(A)0:C(G)D(A) 8,0:C(G)D(A)0:C(G) D(A)0:C(G)D(A) 6,0:E(B)^(^)E(B)^(^)E(B)^(^)E(B)^(^) ^(^)"};
+PROGMEM const char Tetris[] = {
+  "24,0:G 12,d-E 24,F 12,-ed | 24,c 12,c-E 24,G 12,f-e 24,d 12,d-E 24,FG-ec 6,c^ 12,cD-E | 6,F^ 12,FF-A 24,C 12,-b-a 24,g 12,g-e 24,G 12,f-e 24,d 12,d-E 24,FG-ecc^"};
+PROGMEM const char Tuplets1[] = { 
+  //Tuplets in one voice only (3 against 2)
+  "4,-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:A)-1:C(0:E0:A)-1:C(0:E0:A)-1:C(0:E0:A)-1:G(0:F0:A)-1:G(0:F0:A)-1:G(0:F0:A)-1:G(0:F0:A)-1:G(0:F0:B)-1:G(0:F0:B)-1:G(0:F0:B)-1:G(0:F0:B)-1:G(0:F0:B)-1:G(0:F0:B)-1:G(0:F0:B)-1:G(0:F0:B)"
+  "48,0:C(0:E1:C) -1:F(0:F1:C) -1:C(0:e1:C) ^(^^)"};
+PROGMEM const char Madrigal[] = {
+  //Madrigal in 4, by myself :D
+  "48, 0:C(EGC) f(0:FAC)| d(0:FAD) d(0:+FAD) | G(0:G-BD) 24, -2:g(0:G-B-E) g(0:GC-E)|48, D(0:+FD^) 24, -0:D(^^)c |"
+  "48, b(GDG) 24, -b(DGD) -b(EGC) 48, -a(FCF) 24, f(C-AC) f(D-AC) | 48, G(0:-EGC) 24, -2:g(0:dGC) g(0:dGB) 62, C(0:EGC)^(^^^)"};
+PROGMEM const char Maria[] = {
+  //Santa Maria, Estrela do día
+  "24,0:G 12,f-e 24,d 12,d-E 24,FGc 12,c^ | 24,G 12,f-e 24,d 12,cD-Edc-b 24,C 12,C^ |"
+  "24,FGA 12,Af-BagA 24,f 12,f^ | 24,FGA 12,Af-Bagf 24,G 12,G^ | 24,A-BC 12,Ca-BC 6,-ba 12,g 24,A 12,A^ |12,A^A^ 24,A 12,Af-BagA 24,f 12,f^"
+  "24,0:G 12,f-e 24,d 12,d-E 24,FGc 12,c^ | 24,G 12,f-e 24,d 12,cD-Edc-b 24,C 12,C^"};
+PROGMEM const char Luke[] = {
+  //From the original TinySynth
+  "24,0: C(-1:C)Fe 12,dE | 24,F(-1:D) 12,eF 24,A(-1:G)g | 12,f(-1:F)eF(-1:E)G 24,f(-1:D)e(-1:C) |"
+  "12,d(-2:B)Edc 24,b(-2:G)G | c(-1:C)Fe 12,dE | 24,F(-1:D) 12,eF 24,A(-1:G)g |"
+  "12,A(-1:F)gA(-1:E)Cb(-1:G)gB(-1:B)D | 24,c(-1:C)g 48,C ^(^^)"};
+
+/////////////////////////////PLAYLIST///////////////////////////////////////
+
+int numberOfTunes = 9;     //number of tunes in the playlist, including Clear[]
+
+void playList (int tune) { //here you set what tunes to play,and their order. Don't forget to update the numberOfTunes above if necessary
+  switch (tune) {
+    case 0:                //DO NOT MODIFY THIS ONE
+      play(Clear);           
+      break;
+    case 1:
+      play(musScale);
+      break;
+    case 2:
+      play(Luke);
+      break;
+    case 3:
+      play(Tuplets);
+      break;
+    case 4:
+      play(Tuplets1);
+      break;
+    case 5:
+      play(Maria);
+      break;
+    case 6:
+      play(Bach);
+      break;
+    case 7:
+      play(Tetris);
+      break;
+    case 8:
+      play(Madrigal);
+      break;
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////////
 
 #define F_CPU 8000000
 
@@ -52,6 +150,7 @@ char Octave = 0, LastIndex = 0, Duration = 24;
 int Index = 0;
 int currentTune = 1;
 bool repeatTune = false;
+bool finishedTune = false;
 
 //Tempo Modifier
 bool tempoChange;
@@ -60,35 +159,6 @@ float const factor = 0.125;
 float speedFactor;
 int tempRead; 
 
-//Tunes
-int numberOfTunes = 8;
-
-PROGMEM const char Clear[] = {"2,^(^^^)"}; //silences all the channels
-PROGMEM const char musScale[] = {"12, 0:CDEFGABCDEFGABCbagfedcbagfed 24, c^"};
-PROGMEM const char Bach[] = {//BACH, Choral BWV153-9 Ach Gott, Wie Manches Herzeleid
-  "12,-1:C(-1:G0:E1:C)-1:C(-1:G0:E^)-1:E(0:C0:G1:C)-1:E(0:C0:G^)-1:c(0:E0:G1:C)-1:c(0:E0:G^) 24,-1:F(0:c0:f0:a)-1:F(0:D0:G0:B)-1:e(0:E0:G1:C)-1:+F(0:d0:A1:D)-1:+F(0:d0:A1:c)-1:G(0:d0:g0:b)-1:d(0:d0:+f0:a)-1:d(0:d0:+f0:a)-1:d(0:d0:+f0:a)^(^^^)"
-  "24,-1:D(0:d0:+F0:A)-1:G(0:d0:G0:B)-1:e(0:E0:G1:C)-2:b(0:d0:G1:D)-2:b(0:d0:G1:D)-1:C(0:E0:G1:c)-1:G(0:d0:G0:b)-1:d(0:d0:G0:a)12,-1:d(0:d0:+F0:a)-1:d(0:c0:+F0:a)24,-2:g(-1:b0:g0:g)-2:g(-1:b0:g0:g)-2:g(-1:b0:g0:g)^(^^^)"
-  "12,0:C(0:C0:G1:E)0:C(0:C0:G^) -1:+G(-1:b0:e1:E)-1:+G(-1:b0:e^) -1:e(0:E0:+G1:E)-1:e(0:E0:+G^) 24, -1:A(0:E0:A1:c)-1:A(0:F0:B1:D)-2:a(0:G1:+C1:E)-1:D(0:f1:D1:F)-1:E(0:G1:c1:e)-1:F(0:c1:c1:e)-1:G(-1:b0:G1:d)-1:G(-1:b0:G1:d)-1:G(-1:b0:G1:d)^(^^^)"
-  "24,-1:E(0:C0:G1:C)-1:d(-1:f0:B1:D)-1:c(-1:G0:C1:E)-1:F(-1:A0:C1:d)-1:G(-1:B0:b1:d) 32, -1:A(0:C0:e1:c) 4, ^(^^^) 24,-1:+f(0:d0:A1:c)-1:G(0:d0:g0:b)-2:g(0:d0:g0:b)-1:C(0:E0:G1:C)-1:C(0:E0:G1:C)-1:C(0:E0:G1:C)^(^^^)"};
-PROGMEM const char Tuplets[] = {
-  "24,0:C(G)D(A) 12,0:C(G)D(A)0:C(G)D(A) 8,0:C(G)D(A)0:C(G) D(A)0:C(G)D(A) 6,0:E(B)^(^)E(B)^(^)E(B)^(^)E(B)^(^) ^(^)"};
-PROGMEM const char Tetris[] = {
-  "24,0:G 12,d-E 24,F 12,-ed | 24,c 12,c-E 24,G 12,f-e 24,d 12,d-E 24,FG-ec 6,c^ 12,cD-E | 6,F^ 12,FF-A 24,C 12,-b-a 24,g 12,g-e 24,G 12,f-e 24,d 12,d-E 24,FG-ecc^"};
-PROGMEM const char Tuplets1[] = { //tuplets in one voice only
-  "4,-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:G)-1:C(0:E0:A)-1:C(0:E0:A)-1:C(0:E0:A)-1:C(0:E0:A)-1:G(0:F0:A)-1:G(0:F0:A)-1:G(0:F0:A)-1:G(0:F0:A)-1:G(0:F0:B)-1:G(0:F0:B)-1:G(0:F0:B)-1:G(0:F0:B)-1:G(0:F0:B)-1:G(0:F0:B)-1:G(0:F0:B)-1:G(0:F0:B)"
-  "48,0:C(0:E1:C) -1:F(0:F1:C) -1:C(0:e1:C) ^(^^)"};
-PROGMEM const char Madrigal[] = {//Madrigal in 4
-  "48, 0:C(EGC) f(0:FAC)| d(0:FAD) d(0:+FAD) | G(0:G-BD) 24, -2:g(0:G-B-E) g(0:GC-E)|48, D(0:+FD^) 24, -0:D(^^)c |"
-  "48, b(GDG) 24, -b(DGD) -b(EGC) 48, -a(FCF) 24, f(C-AC) f(D-AC) | 48, G(0:-EGC) 24, -2:g(0:dGC) g(0:dGB) 62, C(0:EGC)^(^^^)"};
-PROGMEM const char Maria[] = {//Santa Maria Estrela do día
-  "24,0:G 12,f-e 24,d 12,d-E 24,FGc 12,c^ | 24,G 12,f-e 24,d 12,cD-Edc-b 24,C 12,C^ |"
-  "24,FGA 12,Af-BagA 24,f 12,f^ | 24,FGA 12,Af-Bagf 24,G 12,G^ | 24,A-BC 12,Ca-BC 6,-ba 12,g 24,A 12,A^ |12,A^A^ 24,A 12,Af-BagA 24,f 12,f^"
-  "24,0:G 12,f-e 24,d 12,d-E 24,FGc 12,c^ | 24,G 12,f-e 24,d 12,cD-Edc-b 24,C 12,C^"};
-PROGMEM const char Luke[] = {
-  "24,0: C(-1:C)Fe 12,dE | 24,F(-1:D) 12,eF 24,A(-1:G)g | 12,f(-1:F)eF(-1:E)G 24,f(-1:D)e(-1:C) |"
-  "12,d(-2:B)Edc 24,b(-2:G)G | c(-1:C)Fe 12,dE | 24,F(-1:D) 12,eF 24,A(-1:G)g |"
-  "12,A(-1:F)gA(-1:E)Cb(-1:G)gB(-1:B)D | 24,c(-1:C)g 48,C ^(^^)"};
-
 void setup() {
   
   PRR = (1 << PRUSI);                  //disable USI to save power as we are not using it
@@ -96,15 +166,15 @@ void setup() {
   
   pinMode(0, OUTPUT); //LED
   pinMode(4, OUTPUT); //timer 1 in digital output 4 - outs 1 and 2
-  pinMode(3, INPUT);  //analog- freq input (knob plus external input 1)
+  pinMode(3, INPUT);  //analog- tempo input (knob plus external input 1)
   pinMode(2, INPUT);  //analog- input (external input 2)
   pinMode(1, INPUT);  //digital input (push button)
   
   checkVoltage();
   ADMUX = 0;                           //reset multiplexer settings
-  ADMUX |= (1<<ADLAR);                                  //left-adjust result (8 bit conversion) 
-  ADMUX |= (1 << MUX1) | (1 << MUX0); 
-  ADCSRA |= (1 << ADSC);                                //start conversion
+  ADMUX |= (1<<ADLAR);                 //left-adjust result (8 bit conversion) 
+  ADMUX |= (1 << MUX1) | (1 << MUX0);  //input 3
+  ADCSRA |= (1 << ADSC);               //start conversion
   
   //set clock source for PWM -datasheet p94
   PLLCSR |= (1 << PLLE);               // Enable PLL (64 MHz)
@@ -138,11 +208,11 @@ void setup() {
   digitalWrite(0, HIGH); //lights ON
 }
 
-// Watchdog interrupt counts ticks (1/64 sec)
+// Watchdog interrupt (1/64 sec)
 ISR(WDT_vect) {
-  setTempoModifier();                                       //start next conversion
+  setTempoModifier();                                       
   if (!readingButton)
-  GlobalTicks++;
+  GlobalTicks++;          //counts ticks
 }
 
 ISR(PCINT0_vect) {                       //PIN Interruption - has priority over COMPA; this ensures that the switch will work
@@ -151,11 +221,11 @@ ISR(PCINT0_vect) {                       //PIN Interruption - has priority over 
 
 // Generate triangle waves on 4 channels
 ISR(TIMER0_COMPA_vect) { 
-  volatile signed char Mask, Temp, Sum;   //change: marking the vars as volatile got rid of all the clicks when repeating the same note
-  for (int c=0; c<=3; c++) {
+  char Mask, Temp, Sum = 0;   
+  for (int c = 0; c < 4; c++) {
     Acc[c] = Acc[c] + Freqs[c];
     Temp = Acc[c] >> 8;
-    Mask = Temp >> 7;
+    Mask = Temp >> 15;
     Sum = Sum + ((char)(Temp ^ Mask) >> 1);
   }
   OCR1B = Sum;
@@ -163,13 +233,17 @@ ISR(TIMER0_COMPA_vect) {
 
 void loop(){
   checkButton();
- 
-  playList(currentTune); 
+  playList(currentTune);
+  if (finishedTune) {
+    int val = analogRead(1);
+    if (!val) advancePlaylist();         //place a jumper between both pins at I/O4
+    //if (val > 700) advancePlaylist();  //place your finger, or a small resistor (47Ω) between both pins at I/O 4
+  }; 
 }
 
-void setTempoModifier(){ //a modifier to the tune's base tempo 
-  tempRead = 16 - (ADCH >> 4); //values between 16 and 1 -- the highest the reading, the slowest the final tempo
-  ADCSRA |=  (1<<ADSC);   
+void setTempoModifier(){                //a modifier to the tune's base tempo 
+  tempRead = 16 - (ADCH >> 4);          //ADCH is the register with the 8 bit analog reading. Values between 1 and 16, where 16 is the knob all the way counterclockwise (the highest the reading, the slowest the final tempo)
+  ADCSRA |=  (1<<ADSC);                 //start next conversion  
   if(!tempoChange) {
     if(tempRead == lastTempoChangeRead) {      
       tempoChange = true;
@@ -177,7 +251,7 @@ void setTempoModifier(){ //a modifier to the tune's base tempo
   }
   else {
     lastTempoChangeRead = tempRead;
-    speedFactor = tempRead * factor;    //the smaller the factor, the faster the speed
+    speedFactor = tempRead * factor;    //the smaller the speedfactor, the faster the speed
   }
 }
 
@@ -206,7 +280,7 @@ void checkButton() {
           additionalClicks++;                                              //if we press the button and we were not pressing it before, that counts as a click
         }
         
-        if (button_delay_b == 50) {
+        if (button_delay_b == 100) {
           if (additionalClicks == 0){           
             if (beenLongPressed) {                    //button released after being pressed for a while
               readingButton = false;
@@ -257,49 +331,19 @@ void checkButton() {
   }
 }
 
-void playList (int tune) { //change: playlist
-  switch (tune) {
-    case 0:
-      play(Clear);
-      break;
-    case 1:
-      play(musScale);
-      break;
-    case 2:
-      play(Luke);
-      break;
-    case 3:
-      play(Tuplets);
-      break;
-    case 4:
-      play(Tuplets1);
-      break;
-    case 5:
-      play(Maria);
-      break;
-    case 6:
-      play(Bach);
-      break;
-    case 7:
-      play(Tetris);
-      break;
-    case 8:
-      play(Madrigal);
-      break;
-  }
-}
-
 void advancePlaylist(){
+    finishedTune = false;
     repeatTune = false;
     resetTempoModifierParams();
     rewind();
     play(Clear);
     rewind();
     currentTune++;
-    if (currentTune > numberOfTunes) currentTune = 1; //we skip tune 0 because that's a special tune that resets all the channels
+    if (currentTune > (numberOfTunes - 1)) currentTune = 1; //we skip tune 0 because that's a special tune that resets all the channels
 }
 
 void rewindAndStop(){
+    finishedTune = false;
     repeatTune = false;
     resetTempoModifierParams();
     rewind();
@@ -317,12 +361,12 @@ void rewind(){  //called from play() when we set a tune to repeat (that's why it
 }
 
 void resetTempoModifierParams(){
-tempoChange = false;
-lastTempoChangeRead = 4;                          //a reading from the potentiometer
-speedFactor = 1;                                  //the actual modifier
+  tempoChange = false;
+  lastTempoChangeRead = 4;                          //a reading from the potentiometer
+  speedFactor = 1;                                  //the actual modifier
 }
 
-// Parse Ample tune notation
+// Parse AMPLE tune notation
 void play(const char theTune[]) { 
   char Sign = 0, Number = 0;
   char Symbol, Chan, SaveIndex, SaveOctave;
@@ -337,7 +381,10 @@ void play(const char theTune[]) {
     else if (Symbol == ')') { Bra = 0; LastIndex = SaveIndex; Octave = SaveOctave; }
     else if (Symbol == 0) // End of string - stop
     {
-      if (!repeatTune) break; 
+      if (!repeatTune) {
+        finishedTune = true;
+        break;
+      } 
       rewind();
     }
     else if (Symbol == ',') { Duration = Number; Number = 0; Sign = 0; }
@@ -352,7 +399,7 @@ void play(const char theTune[]) {
     else if (Symbol == '-') Sign = -1;
     else if (Symbol == '+') Sign = 1;
     else if (Symbol == '/') ReadNote = 1;
-    else if (Symbol == '^') { attenuate(Acc[Chan]); Freqs[Chan++] = 0; ReadNote = 1;  } //change:attenuate rather than silence (solves clicks)
+    else if (Symbol == '^') { attenuate(Acc[Chan]); Freqs[Chan++] = 0; ReadNote = 1;  } //when there's a silence, attenuate rather than straight silence (solves clicks)
     else if ((CapSymbol >= 'A') && (CapSymbol <= 'G')) {
       boolean Lowercase = (Symbol & 0x20);
       Index = (((CapSymbol - 'A' + 5) % 7) << 1) + 1 + Sign;
@@ -368,10 +415,9 @@ void play(const char theTune[]) {
   TunePtr--;
   NextTick = NextTick + (Duration * speedFactor);    //change: allows to modify the speed 
   do ; while (Ticks() < NextTick);
-  
 }
 
-void attenuate(int chan){      //change: attenuate gradually (solves clicks)
+void attenuate(int chan){      //attenuate gradually (solves clicks)
   while (chan > 0){  
   --chan;
   }
