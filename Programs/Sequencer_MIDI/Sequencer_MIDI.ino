@@ -140,7 +140,7 @@ void setup()
  
   pinMode(0, OUTPUT); //LED
   pinMode(4, OUTPUT); //Note output
-  pinMode(2, OUTPUT); //Note output
+  pinMode(2, OUTPUT); //Gate (see below)
   pinMode(3, INPUT);  //Speed input/ Note input during editing
   pinMode(1, INPUT);  //Digital input (push button)
   
