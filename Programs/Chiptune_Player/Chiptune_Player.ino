@@ -25,7 +25,9 @@ OPERATION
     -Moving on to the next tune resets any tempo or repeat modifications 
   Double click: rewind current tune
     -(You only need to wait until the LED turns off for the first click)
-  Triple Click: rewind the whole playlist and stop
+  Triple Click: rewind the whole playlist
+    -If the Continuous Playback Mode is OFF, the music stops after rewinding
+    -If the Continuous Playback Mode is ON, the playlist starts from the top after rewinding 
   Click and Hold: turn autorepeat ON or OFF for the current tune
     -IMPORTANT: wait until the LED turns ON again to release button 
   Place a jumper in I/O 4: turn Continuous Playback ON
