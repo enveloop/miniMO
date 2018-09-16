@@ -51,15 +51,16 @@ PROGMEM const char Clear[] = {"2,^(^^^)"}; //silences all the channels -- DO NOT
 //////////////////////////////////TUNES///////////////////////////////////////
 
 //The tunes are written in AMPLE Notation. See  http://www.technoblogy.com/show?Q7H for details on the exact imnplementation
+//I made a worksheet here https://drive.google.com/open?id=1blwMAV_8RtovSnFqo_yHIi5Lv1tc0lst0N6mrICpTdg to assist with complex pieces (see Bach)
 
 PROGMEM const char musScale[] = {
-  "12, 0:CDEFGABCDEFGABCbagfedcbagfed 24, c^"};
+  "12, 0:CDEFGABCDEFGABCbagfedcbagfed 24, c^"};  //12 is the duration of each note (until you set another duration) // 0: is the base octave // CD means ascending, while Cb means descending // ^ is a silence
 PROGMEM const char Bach[] = {
   //BACH, Choral BWV153-9 Ach Gott, Wie Manches Herzeleid
   "12,-1:C(-1:G0:E1:C)-1:C(-1:G0:E^)-1:E(0:C0:G1:C)-1:E(0:C0:G^)-1:c(0:E0:G1:C)-1:c(0:E0:G^) 24,-1:F(0:c0:f0:a)-1:F(0:D0:G0:B)-1:e(0:E0:G1:C)-1:+F(0:d0:A1:D)-1:+F(0:d0:A1:c)-1:G(0:d0:g0:b)-1:d(0:d0:+f0:a)-1:d(0:d0:+f0:a)-1:d(0:d0:+f0:a)^(^^^)"
   "24,-1:D(0:d0:+F0:A)-1:G(0:d0:G0:B)-1:e(0:E0:G1:C)-2:b(0:d0:G1:D)-2:b(0:d0:G1:D)-1:C(0:E0:G1:c)-1:G(0:d0:G0:b)-1:d(0:d0:G0:a)12,-1:d(0:d0:+F0:a)-1:d(0:c0:+F0:a)24,-2:g(-1:b0:g0:g)-2:g(-1:b0:g0:g)-2:g(-1:b0:g0:g)^(^^^)"
   "12,0:C(0:C0:G1:E)0:C(0:C0:G^) -1:+G(-1:b0:e1:E)-1:+G(-1:b0:e^) -1:e(0:E0:+G1:E)-1:e(0:E0:+G^) 24, -1:A(0:E0:A1:c)-1:A(0:F0:B1:D)-2:a(0:G1:+C1:E)-1:D(0:f1:D1:F)-1:E(0:G1:c1:e)-1:F(0:c1:c1:e)-1:G(-1:b0:G1:d)-1:G(-1:b0:G1:d)-1:G(-1:b0:G1:d)^(^^^)"
-  "24,-1:E(0:C0:G1:C)-1:d(-1:f0:B1:D)-1:c(-1:G0:C1:E)-1:F(-1:A0:C1:d)-1:G(-1:B0:b1:d) 32, -1:A(0:C0:e1:c) 4, ^(^^^) 24,-1:+f(0:d0:A1:c)-1:G(0:d0:g0:b)-2:g(0:d0:g0:b)-1:C(0:E0:G1:C)-1:C(0:E0:G1:C)-1:C(0:E0:G1:C)^(^^^)"};
+  "24,-1:E(0:C0:G1:C)-1:d(-1:f0:B1:D)-1:c(-1:G0:C1:E)-1:F(-1:A0:C1:d)-1:G(-1:B0:b1:d) 12,-1:A(0:C0:e1:c)-1:A(0:C0:e1^) 24,-1:+f(0:d0:A1:c)-1:G(0:d0:g0:b)-2:g(0:d0:g0:b)-1:C(0:E0:G1:C)-1:C(0:E0:G1:C)-1:C(0:E0:G1:C)^(^^^)"};
 PROGMEM const char Tuplets[] = {
   "24,0:C(G)D(A) 12,0:C(G)D(A)0:C(G)D(A) 8,0:C(G)D(A)0:C(G) D(A)0:C(G)D(A) 6,0:E(B)^(^)E(B)^(^)E(B)^(^)E(B)^(^) ^(^)"};
 PROGMEM const char Tetris[] = {
@@ -234,13 +235,21 @@ ISR(TIMER0_COMPA_vect) {
 }
 
 void loop(){
-  checkButton();
-  playList(currentTune);
+  checkButton();                        
+  playList(currentTune);                
+  checkContinuousPlayback();           
+}
+
+void checkContinuousPlayback(){          //plays the next tune if there's a signal in I/O 4
   if (finishedTune) {
-    int val = analogRead(1);
-    if (!val) advancePlaylist();         //place a jumper between both pins at I/O4
-    //if (val > 700) advancePlaylist();  //place your finger, or a small resistor (47Ω) between both pins at I/O 4
-  }; 
+    int val = analogRead(1);             //read I/O 4 with 10 bit resolution
+    ///////////USER EDITABLE////////
+    if (!val) advancePlaylist();         //if you use this line, place a jumper between both pins at I/O 4
+    //if (val > 700) advancePlaylist();  //if you use this line, place your finger, or a small resistor (47Ω) between both I/O 4 pins
+    ////////////////////////////////
+    ADMUX |= (1 << MUX1) | (1 << MUX0);  //select input 3 (for the running tempo reading)
+    ADCSRA |=  (1<<ADSC);                //start next conversion
+  };
 }
 
 void setTempoModifier(){                //a modifier to the tune's base tempo 
