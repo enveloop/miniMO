@@ -29,10 +29,12 @@ OPERATION
     -If the Continuous Playback Mode is OFF, the music stops after rewinding
     -If the Continuous Playback Mode is ON, the playlist starts from the top after rewinding 
   Click and Hold: turn Autorepeat ON or OFF for the current tune
-    -IMPORTANT: wait until the LED turns ON again to release button 
+    -IMPORTANT: wait until the LED turns ON again to release button
+    -You can click and hold after a tune has finished to turn Autorepeat ON for that tune
   Place a jumper in I/O 4: turn Continuous Playback ON
     -miniMO plays all the tunes in the playlist, and automatically restarts the playlist after the last tune is finished 
-    -Alternatively, you can engage this mode by placing a small resistor or a finger on the pins, after a small change in the code (see loop())   
+    -Alternatively, you can engage this mode by placing a small resistor or a finger on the pins 
+    -You can also control this mode from another miniMO (set the output pin in the control miniMO to HIGH to disable, or LOW to enable)  
 
 BATTERY CHECK
   When you switch the module ON,
@@ -149,16 +151,19 @@ int NextTick = 0;
 int TunePtr = 0;
 char Octave = 0, LastIndex = 0, Duration = 24;
 int Index = 0;
-int currentTune = 1;
+
+//PLaylist
+int currentTune = 1;           
 bool repeatTune = false;
 bool finishedTune = false;
+byte contRead;               
 
 //Tempo Modifier
 bool tempoChange;
-char lastTempoChangeRead;
-float const factor = 0.125;
+char referenceChangeRead = 8;  //make sure that referenceChangeRead * factor = 1 (see below)   
+float const factor = 0.125;    //we get values from 1 to 16 from the knob, multiply them by this value, and then multiply the note duration by the result to alter the playback speed 
 float speedFactor;
-int tempRead; 
+byte tempRead; 
 
 void setup() {
   
@@ -172,9 +177,13 @@ void setup() {
   pinMode(1, INPUT);  //digital input (push button)
   
   checkVoltage();
+  
+  ADCSRA = (1 << ADEN);             //reset ADC Control (ADC Enable 1, everything else 0)
+  ADCSRA |= (1 << ADPS2); 
+  
   ADMUX = 0;                           //reset multiplexer settings
   ADMUX |= (1<<ADLAR);                 //left-adjust result (8 bit conversion) 
-  ADMUX |= (1 << MUX1) | (1 << MUX0);  //input 3
+   ADMUX |= (1 << MUX0);
   ADCSRA |= (1 << ADSC);               //start conversion
   
   //set clock source for PWM -datasheet p94
@@ -211,7 +220,7 @@ void setup() {
 
 // Watchdog interrupt (1/64 sec)
 ISR(WDT_vect) {
-  setTempoModifier();                                       
+  readInputs();                                       
   if (!readingButton)
   GlobalTicks++;          //counts ticks
 }
@@ -234,33 +243,39 @@ ISR(TIMER0_COMPA_vect) {
 
 void loop(){
   checkButton();                        
-  playList(currentTune);                
-  checkContinuousPlayback();           
+  playList(currentTune);   
+  checkContinuousPlayback();  
 }
 
-void checkContinuousPlayback(){          //plays the next tune if there's a signal in I/O 4
-  if (finishedTune) {
-    int val = analogRead(1);             //read I/O 4 with 10 bit resolution
-    ///////////USER EDITABLE////////
-    if (!val) advancePlaylist();         //if you use this line, place a jumper between both pins at I/O 4
-    //if (val > 700) advancePlaylist();  //if you use this line, place your finger, or a small resistor (47Ω) between both I/O 4 pins
-    ////////////////////////////////
-    ADMUX |= (1 << MUX1) | (1 << MUX0);  //select input 3 (for the running tempo reading)
-    ADCSRA |=  (1<<ADSC);                //start next conversion
+void readInputs(){                      //every pass it takes a reading, assigns it, and changes the input
+    if (!(ADMUX & 0x02)){               //if the audio input is selected... (it's ADC1, so MUX1 = 0. MUX1 is the second bit in register ADMUX; then, ADMUX & binary 10 = 0, or !(ADMUX&0x02). That ! is logic, so it's not inverting anything, but checking that the value is false       
+      contRead = ADCH;                  //assign the reading to the controlRead variable
+      ADMUX |= (1 << MUX1);             //select the input for next reading: tempo modifier (ADC3, so MUX1 = 1 and MUX0 = 1. MUX0 was already set to 1 during setup)
+    }
+    else
+    {
+      setTempoModifier();               //tempo control reading is very time sensitive so we trigger it here
+      ADMUX &= ~(1 << MUX1);            //select the input for next reading: continuous playback (ADC1, so MUX1 = 0 and MUX0=1. MUX0 was already set to 1 during setup) 
+    }
+    ADCSRA |=  (1<<ADSC);               //start next conversion
+}
+
+void checkContinuousPlayback(){                //plays the next tune automatically, or not, depending of the signal detected in I/O 4
+  if ((finishedTune)) {                                               
+    if (contRead < 120) advancePlaylist();     //place a jumper, a finger, or a small resistor (e.g. 47Ω) between both I/O 4 pins
   };
 }
 
 void setTempoModifier(){                //a modifier to the tune's base tempo 
   tempRead = 16 - (ADCH >> 4);          //ADCH is the register with the 8 bit analog reading. Values between 1 and 16, where 16 is the knob all the way counterclockwise (the highest the reading, the slowest the final tempo)
-  ADCSRA |=  (1<<ADSC);                 //start next conversion  
   if(!tempoChange) {
-    if(tempRead == lastTempoChangeRead) {      
+    if(tempRead == referenceChangeRead) {  
+      //flashLEDOnce ();                //gives a visual confirmation but also interrupts playback
       tempoChange = true;
     }
   }
   else {
-    lastTempoChangeRead = tempRead;
-    speedFactor = tempRead * factor;    //the smaller the speedfactor, the faster the speed
+    speedFactor = tempRead * factor;    //the smaller the speedfactor, the faster the speed 
   }
 }
 
@@ -326,7 +341,7 @@ void checkButton() {
            else if (additionalClicks > 1 ) {                 //button pressed at least twice more(triple click or more)
             readingButton = false;
             flashLEDTwice();    
-            rewindAndStop();
+            rewindAll();
 
             button_delay = 0;
             button_delay_b = 0;
@@ -341,9 +356,9 @@ void checkButton() {
 }
 
 void advancePlaylist(){
+    resetTempoModifierParams();
     finishedTune = false;
     repeatTune = false;
-    resetTempoModifierParams();
     rewind();
     play(Clear);
     rewind();
@@ -351,10 +366,10 @@ void advancePlaylist(){
     if (currentTune > (numberOfTunes - 1)) currentTune = 1; //we skip tune 0 because that's a special tune that resets all the channels
 }
 
-void rewindAndStop(){
+void rewindAll(){
+    resetTempoModifierParams();
     finishedTune = false;
     repeatTune = false;
-    resetTempoModifierParams();
     rewind();
     play(Clear);
     rewind();
@@ -371,8 +386,7 @@ void rewind(){  //called from play() when we set a tune to repeat (that's why it
 
 void resetTempoModifierParams(){
   tempoChange = false;
-  lastTempoChangeRead = 4;                          //a reading from the potentiometer
-  speedFactor = 1;                                  //the actual modifier
+  speedFactor = 1;
 }
 
 // Parse AMPLE tune notation
@@ -408,7 +422,7 @@ void play(const char theTune[]) {
     else if (Symbol == '-') Sign = -1;
     else if (Symbol == '+') Sign = 1;
     else if (Symbol == '/') ReadNote = 1;
-    else if (Symbol == '^') { attenuate(Acc[Chan]); Freqs[Chan++] = 0; ReadNote = 1;  } //when there's a silence, attenuate rather than straight silence (solves clicks)
+    else if (Symbol == '^') { attenuate(Acc[Chan]); Freqs[Chan++] = 0; ReadNote = 1;  } //when there's a silence, attenuate rather than straight silence (removes clicks)
     else if ((CapSymbol >= 'A') && (CapSymbol <= 'G')) {
       boolean Lowercase = (Symbol & 0x20);
       Index = (((CapSymbol - 'A' + 5) % 7) << 1) + 1 + Sign;
@@ -426,7 +440,7 @@ void play(const char theTune[]) {
   do ; while (Ticks() < NextTick);
 }
 
-void attenuate(int chan){      //attenuate gradually (solves clicks)
+void attenuate(int chan){      //attenuate gradually (removes clicks)
   while (chan > 0){  
   --chan;
   }
