@@ -179,11 +179,11 @@ void setup() {
   checkVoltage();
   
   ADCSRA = (1 << ADEN);             //reset ADC Control (ADC Enable 1, everything else 0)
-  ADCSRA |= (1 << ADPS2); 
+  ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0) ;  //set adc prescaler  to 128 for 62.5kHz (ADC input clock). 62.5/13 cycles per  sample = 4.8 Khz -much, much faster than the interruption where we read the result
   
   ADMUX = 0;                           //reset multiplexer settings
   ADMUX |= (1<<ADLAR);                 //left-adjust result (8 bit conversion) 
-   ADMUX |= (1 << MUX0);
+  ADMUX |= (1 << MUX0);                //input 1
   ADCSRA |= (1 << ADSC);               //start conversion
   
   //set clock source for PWM -datasheet p94
@@ -308,6 +308,7 @@ void checkButton() {
           if (additionalClicks == 0){           
             if (beenLongPressed) {                    //button released after being pressed for a while
               readingButton = false;
+              if (finishedTune) finishedTune = false; //we can set the tune to repeat after it has ended -this updates the playing state in that case
               repeatTune = !repeatTune;
               
               beenLongPressed = false;
@@ -361,9 +362,10 @@ void advancePlaylist(){
     repeatTune = false;
     rewind();
     play(Clear);
-    rewind();
+    
     currentTune++;
     if (currentTune > (numberOfTunes - 1)) currentTune = 1; //we skip tune 0 because that's a special tune that resets all the channels
+    rewind();
 }
 
 void rewindAll(){
@@ -372,8 +374,9 @@ void rewindAll(){
     repeatTune = false;
     rewind();
     play(Clear);
-    rewind();
+   
     currentTune = 0;
+    rewind();
 }
 
 void rewind(){  //called from play() when we set a tune to repeat (that's why it doesn't have repeatTune = false) 
@@ -391,8 +394,9 @@ void resetTempoModifierParams(){
 
 // Parse AMPLE tune notation
 void play(const char theTune[]) { 
-  char Sign = 0, Number = 0;
-  char Symbol, Chan, SaveIndex, SaveOctave;
+  char Sign = 0, Number = 0, Chan = 0, SaveIndex = 0, SaveOctave = 0;
+  char Symbol;
+  
   boolean More = 1, ReadNote = 0, Bra = 0, SetOctave = 0;
   do {
     do { // Skip formatting characters
