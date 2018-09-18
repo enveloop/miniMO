@@ -32,7 +32,8 @@
 /////////////////////////////////////
 
 #define SCL		        PB0	// SCL,	MO in miniMO
-#define SDA		        PB1	// SDA,	MI in miniMO
+#define SDA		        PB2	// SDA,	SCK in miniMO (you lose I/O 4)
+//#define SDA		        PB1	// SDA,	MI in miniMO (you lose push button)  
 
 #define SA		        0x78	// Slave address
 
