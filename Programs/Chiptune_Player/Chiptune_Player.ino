@@ -20,7 +20,7 @@ I/O
 OPERATION
   Knob: change tempo modifier
     -miniMO waits until you reach the last value it has currently stored to start effecting changes
-  Single Click: play next tune
+  Click: play next tune
     -IMPORTANT: wait until the LED turns OFF to release the button 
     -Advancing to the next tune resets any tempo or repeat modifications 
   Double click: rewind current tune

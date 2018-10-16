@@ -22,7 +22,7 @@ OPERATION
     -miniMO waits until you reach the value it has currently stored 
   Click: toggle between parameters
     -There are three parameters available per algorithm 
-    -The LED blinks once, twice or thrice according to the parameter selected 
+    -The LED blinks once, twice, or thrice, according to the parameter selected 
   Double Click: toggle between algorithms
     -The LED blinks once
         
@@ -32,7 +32,7 @@ BATTERY CHECK
     -If the LED blinks fast several times, the battery is running low
 
 NOTES&TROUBLESHOOTING
-  Sometimes the sound changes even when moving between parameters 
+  Sometimes the sound changes when moving between parameters 
 
 
 //
