@@ -7,7 +7,10 @@
 Based on the RCArduino Algorithmic Music code by Duane Banks, 
  as described Here:
 http://rcarduino.blogspot.com.es/2012/09/algorithmic-music-on-arduino.html
- 
+
+, and the Algorithmic Noise Machine, by Madshobye:
+https://www.instructables.com/id/Algorithmic-noise-machine/
+
 Also uses the xorshift pseudorandom number generator,
  as described Here:
 http://www.arklyffe.com/main/2010/08/29/xorshift-pseudorandom-number-generator/ 
