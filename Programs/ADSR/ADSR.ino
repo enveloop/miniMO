@@ -20,8 +20,9 @@ TRIGGER MODES
   The ADSR outputs the envelope when it detects an external trigger through I/O 4
  
   AUTOTRIGGER 
-  The ADSR outputs the envelope continuosly, acting like an LFO with shape control
+  The ADSR outputs the envelope continuously, acting like an LFO with shape control
     -To set the ADSR to Autotrigger Mode, turn the module ON while pressing the button, and release the button after the battery check 
+  The ADSR also outputs a trigger on I/O4 at the beginning of each cycle
 
 OPERATION
   Knob: modify the selected parameter
