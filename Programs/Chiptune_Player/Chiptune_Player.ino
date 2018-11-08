@@ -248,7 +248,7 @@ void loop(){
 }
 
 void readInputs(){                      //every pass it takes a reading, assigns it, and changes the input
-    if (!(ADMUX & 0x02)){               //if the audio input is selected... (it's ADC1, so MUX1 = 0. MUX1 is the second bit in register ADMUX; then, ADMUX & binary 10 = 0, or !(ADMUX&0x02). That ! is logic, so it's not inverting anything, but checking that the value is false       
+    if (!(ADMUX & 0x02)){               //if the continuous playback input is selected... (it's ADC1, so MUX1 = 0. MUX1 is the second bit in register ADMUX; then, ADMUX & binary 10 = 0, or !(ADMUX&0x02). That ! is logic, so it's not inverting anything, but checking that the value is false       
       contRead = ADCH;                  //assign the reading to the controlRead variable
       ADMUX |= (1 << MUX1);             //select the input for next reading: tempo modifier (ADC3, so MUX1 = 1 and MUX0 = 1. MUX0 was already set to 1 during setup)
     }
