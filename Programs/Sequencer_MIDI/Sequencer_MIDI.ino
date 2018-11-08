@@ -37,7 +37,7 @@ OPERATION MODES
   PLAY (default)
   The sequencer plays through all the steps. The LED turns ON and OFF to mark each step
     -Knob: change tempo / transpose pattern
-       -When you hop between parameters, miniMO waits until you reach the last value it has currently stored to start effecting changes
+       -When you hop between parameters, miniMO waits until you reach the value it has stored to start effecting changes
     -Single click: go to EDIT mode
       -To edit a step, click the button during the PREVIOUS step
       -The pattern freezes in the step after you click, which becomes ready to edit
