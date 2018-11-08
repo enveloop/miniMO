@@ -13,7 +13,7 @@
 I/O
   1&2: Outputs - control voltage (usually for amplitude)
   3: Input - modulates the same parameter as the knob, at any given time
-  4: Input (default)- gate (note ON/OFF) / Output (autotrigger) - trigger 
+  4: Input (default) - gate (note ON/OFF) / Output (autotrigger) - trigger 
 
 TRIGGER MODES
   SLAVE (default)
@@ -31,7 +31,7 @@ OPERATION
   Double click: trigger the ADSR once, manually
   Triple click: bypass the ADSR
     -The LED turns OFF
-    -External triggers are ignored
+    -The module ignores external triggers
     -I/O 1-2 both output max value
       -If you have the ouput connected to an OSCillator's volume input, you will hear the oscillator like if the ADSR was not connected   
   
