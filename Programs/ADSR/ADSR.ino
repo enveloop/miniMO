@@ -1,8 +1,8 @@
 /*
-//************************
-//*      miniMO ADSR     *
-//*   2016 by enveloop   *
-//************************
+//**************************
+//*      miniMO ADSR       *
+//*   2016-18 by enveloop  *
+//**************************
 //
    http://www.minimosynth.com
    CC BY 4.0
@@ -13,14 +13,27 @@
 I/O
   1&2: Outputs - control voltage (usually for amplitude)
   3: Input - modulates the same parameter as the knob, at any given time
-  4: Input - gate (note ON/OFF)
+  4: Input (default)- gate (note ON/OFF) / Output (autotrigger) - trigger 
+
+TRIGGER MODES
+  SLAVE (default)
+  The ADSR outputs the envelope when it detects an external trigger through I/O 4
+ 
+  AUTOTRIGGER 
+  The ADSR outputs the envelope continuosly, acting like an LFO with shape control
+    -To set the ADSR to Autotrigger Mode, turn the module ON while pressing the button, and release the button after the battery check 
 
 OPERATION
   Knob: modify the selected parameter
-    -miniMO waits until you reach the last value, then starts applying the new ones
+    -When you hop between parameters, miniMO waits until you reach the value it has stored to start effecting changes
   Single click: toggle between the available parameters: Attack Length, Decay Length, Sustain Level, Release Length
-    -the LED blinks 1 to 4 times depending on the parameter selected (1-A, 2-D, 3-S, 4-R)
-  Double click: trigger the ADSR once, manually 
+    -The LED blinks 1 to 4 times depending on the parameter selected (1-A, 2-D, 3-S, 4-R)
+  Double click: trigger the ADSR once, manually
+  Triple click: bypass the ADSR
+    -The LED turns OFF
+    -External triggers are ignored
+    -I/O 1-2 both output max value
+      -If you have the ouput connected to an OSCillator's volume input, you will hear the oscillator like if the ADSR was not connected   
   
 BATTERY CHECK
   When you switch the module ON,
@@ -33,7 +46,12 @@ BATTERY CHECK
 #include <util/delay.h>
 
 volatile unsigned int globalTicks;
-volatile int watchdogClicks = 0;
+
+//calibration (use with sequencer)
+bool calibrating = false;
+
+//mode
+bool autoTrigger = false;
 
 //output
 int envelopeValue;
@@ -52,22 +70,24 @@ bool beenDoubleClicked = false;
 bool beenLongPressed = false;
 int additionalClicks = 0;      //variable to see how many times we click after the first
 
-bool lengthChange = false;
-bool levelChange = false;
+bool parameterChange = false;
+byte controlInput;
 
 int currentStep = 0;
 
 const int attackLevel = 255; 
 
 int ADSR[] = {
-  0,   //attackLength
-  1,   //decayLength  
-  255,   //sustainLevel
-  0   //releaseLength 
+  127,   //attackLength
+  127,   //decayLength  
+  127,   //sustainLevel
+  127   //releaseLength 
 };
-  
-bool calibrating = false;
 
+//////////USER EDITING ENCOURAGED
+const byte lengthFactor = 4;  //length values are eight bits; we right shift them by this value to make them shorter (for instance, with value 4 the legnths' range is 0 to 15) 
+/////////////////////////////////
+  
 void setup() {
   //disable USI to save power as we are not using it
   PRR = 1<<PRUSI;
@@ -75,7 +95,14 @@ void setup() {
   //set LED pin and check the battery level
   pinMode(0, OUTPUT); //LED
   checkVoltage();
+  
+  ADCSRA = (1 << ADEN);             //reset ADC Control (ADC Enable 1, everything else 0)
+  ADCSRA |= (1 << ADPS2);           //set adc prescaler  to 16 for 500kHz sampling frequency (8 also works well but is noisier). 500/13 cycles per  sample = 38.4 Khz
+  
   ADMUX = 0;                      //reset multiplexer settings
+  ADMUX |= (1<<ADLAR);            //left-adjust result (8 bit conversion)
+  ADMUX |= (1 << MUX1) | (1 << MUX0); //control input
+  ADCSRA |=  (1<<ADSC);           // start next conversion
 
   pinMode(1, INPUT);  //digital input (push button)
   pinMode(3, INPUT);  //analog- freq input (knob plus external input 1)
@@ -83,7 +110,7 @@ void setup() {
   pinMode(4, OUTPUT); //output
   
   //disable digital input in pins that do analog conversion
-  DIDR0 = (1 << ADC2D) | (1 << ADC3D); //PB3,PB4
+  DIDR0 = (1 << ADC2D) | (1 << ADC3D); //PB3,PB4     
   
   //set clock source for PWM -datasheet p94
   PLLCSR |= (1 << PLLE);               // Enable PLL (64 MHz)
@@ -98,18 +125,32 @@ void setup() {
   OCR1C  = 0xff;                         // 255
   TCCR1  = (1 << CS10);                  // no prescale
   
-  //Pin Change Interrupt
-  GIMSK |= (1 << PCIE);    // Enable 
-  PCMSK |= (1 << PCINT1);  // on pin 1
-  
   //Timer Interrupt Generation -timer 0
   TCCR0A = (1 << WGM01);               // Clear Timer on Compare (CTC) with OCR0A
   TCCR0B = (1 << CS01);                // prescaled by 8
   OCR0A = 0x64;                        // 0x64 = 100 //10000hz - 10000 ticks per second https://www.easycalculation.com/engineering/electrical/avr-timer-calculator.php
   TIMSK = (1 << OCIE0A);               // Enable Interrupt on compare with OCR0A
   
+  //Pin Interrupt Generation
+  GIMSK |= (1 << PCIE);    // Enable 
+  PCMSK |= (1 << PCINT1);  // on pin 1
+  
   sei();                               // Interrupts ON (enable interrupts globally)
   
+  //Trigger mode: external or auto
+  if (digitalRead(1) == HIGH) {        //If we are pressing the button
+    digitalWrite(0, HIGH);             //LED ON
+    _delay_ms(2000);                                      
+    digitalWrite(0, LOW);
+    if (inputButtonValue == 0) {
+      autoTrigger = 1;                 //If we released the button, set Autotrigger mode
+      pinMode(2, OUTPUT);              //Trigger output
+    }
+  }
+  else {
+    autoTrigger = 0;                //external trigger mode 
+    pinMode(2, INPUT);              //Trigger input
+  }
   digitalWrite(0, HIGH); // turn LED ON
 }
 
@@ -120,50 +161,26 @@ ISR(PCINT0_vect) {                 //PIN Interruption - has priority over Timer 
 
 //Timer0 interrupt
 ISR(TIMER0_COMPA_vect) {              //10000 ticks per second
+  setParameter();
   globalTicks++;
 }
 
 void loop() {
-  if (calibrating == false){
-    checkButton();
-    setParameter();
-    triggerADSR(); 
+  checkButton();
+  if (!calibrating){
+    if (!autoTrigger) triggerADSR(); 
+    else retriggerADSR();
   }
-  else if (calibrating == true){
-    
-    checkButton();
-  } 
 }
 
 void setParameter(){
-  if (currentStep == 2) setLevel(3); //step 2 -sustain
-  else setLength(3); 
-}
-
-void setLength(int pin) {
-  levelChange = false;
-  int lengthRead = analogRead(pin) >> 6 ;   //values between 0-15 
-  if(lengthChange == false){
-    if(lengthRead == ADSR[currentStep]){
-      lengthChange = true;
-    }
+  controlInput = ADCH;
+  if (parameterChange) ADSR[currentStep] = controlInput;
+  else if ((controlInput & 0xF0) == (ADSR[currentStep] & 0xF0)) {  //checks the control input against stored value. & 0xF0 is a mask to ignore the 4 lower bits and use less resolution (works better)  
+    parameterChange = true;                                        //If the value is the same (because we have moved the knob to the last known position for that parameter),it is ok to change the value :)
   }
-  else if(lengthChange == true){
-    ADSR[currentStep] = lengthRead;
-  }
-}
-
-void setLevel(int pin) {
-  lengthChange = false;
-  int levelRead = analogRead(pin) >> 2 ;   //values between 0-255 
-  if(levelChange == false){
-    if(levelRead == ADSR[currentStep]){
-      levelChange = true;
-    }
-  }
-  else if(levelChange == true){
-    ADSR[currentStep] = levelRead;
-  }
+  ADCSRA |=  (1<<ADSC);
+  
 }
 
 void manualTrigger() {
@@ -173,26 +190,40 @@ void manualTrigger() {
 }
 
 void triggerADSR() {                      //triggers the envelope when it receives a pulse in the designated input   
-  
   if (PINB & 0x04) {                    //Reads button (digital input1, the third bit in register PINB. We check the value with & binary 100, so 0x04). digitalRead(2) = HIGH 
     if (readyToAttack){ 
       readyToAttack = false;
-      readyToRelease = true;
       readADS();
+      readyToRelease = true;
     }
   }  
   else{
     if (readyToRelease){
-      readyToAttack = true;
       readyToRelease = false;
       readR();
+      readyToAttack = true;
     }
   }  
 }
 
+void retriggerADSR() {                      //triggers the envelope continuously
+  if (readyToAttack){ 
+    readyToAttack = false;
+    digitalWrite(2, HIGH);                  //sends a trigger signal through I/O4
+    readADS();
+    digitalWrite(2, LOW);
+    readyToRelease = true;
+  }
+  else if (readyToRelease){
+    readyToRelease = false;
+    readR();
+    readyToAttack = true;
+  }
+} 
+
 void readADS() {
-  int attackLength = ADSR[0]; 
-  int decayLength = ADSR[1];
+  int attackLength = ADSR[0] >> lengthFactor; 
+  int decayLength = ADSR[1] >> lengthFactor;
   int sustainLevel = ADSR[2]; 
   
   //ATTACK
@@ -226,7 +257,7 @@ void readADS() {
 
 void readR() {
   int sustainLevel = ADSR[2];
-  int releaseLength = ADSR [3];
+  int releaseLength = ADSR [3] >> lengthFactor;
   
   //RELEASE
   if (releaseLength == 0) OCR1B = 0;
@@ -234,10 +265,12 @@ void readR() {
     OCR1B = sustainLevel;
     globalTicks = 0;
     for (envelopeValue = sustainLevel; envelopeValue >= 0;){
-     if (PINB & 1 << 2){                                       //if during R stage there's a trigger, silence and exit
-       OCR1B = 0;
-       return;
-     }
+      if (!autoTrigger) {                                         //NORMAL ADSR ONLY
+        if (PINB & 1 << 2){                                       //if during R stage there's a new trigger, silence and exit
+         OCR1B = 0;
+         return;
+        }
+      }
      OCR1B = envelopeValue;
        if (globalTicks == releaseLength) {
          envelopeValue--;
@@ -251,10 +284,6 @@ void checkButton() {
   while (inputButtonValue == HIGH) {
     button_delay++;
     _delay_ms(10);
-    if (button_delay > 50 &! beenDoubleClicked) {
-      beenLongPressed = true;                      //press and hold 
-
-    }
   }
   if (inputButtonValue == LOW) {
     beenDoubleClicked = false;
@@ -270,29 +299,19 @@ void checkButton() {
           additionalClicks++;                                              //if we press the button and we were not pressing it before, that counts as a click
         }
         
-        if (button_delay_b == 400) {
-          if (additionalClicks == 0){           
-            if (beenLongPressed) {                    //button released after being pressed for a while (most likely because we were changing the volume)
-              beenLongPressed = false;
-              button_delay = 0;
-              button_delay_b = 0;
-              additionalClicks = 0;
-              hold = false;
-            }
-            else {                                    //button released (regular single click)
-              
-              lengthChange = false;
-              levelChange = false;
-              
-              currentStep++;                          //cycles through the steps
-              if (currentStep >= 4) currentStep = 0;   
-              flashLEDSlow(currentStep + 1);              
-              
-              button_delay = 0;
-              button_delay_b = 0;
-              additionalClicks = 0;
-              hold = false;
-            }
+        if (button_delay_b == 300) {
+          if (additionalClicks == 0){    //button released (regular single click)         
+            
+            parameterChange = false;                       
+          
+            currentStep++;                          //cycles through the steps
+            if (currentStep >= 4) currentStep = 0;   
+            flashLEDSlow(currentStep + 1);              
+            
+            button_delay = 0;
+            button_delay_b = 0;
+            additionalClicks = 0;
+            hold = false; 
           }
           else if (additionalClicks == 1) {             //button pressed again (double click),         
             
@@ -303,7 +322,7 @@ void checkButton() {
             additionalClicks = 0;
             beenDoubleClicked = true;
             hold = false;
-            }
+          }
           else if (additionalClicks > 1 ) {                 //button pressed at least twice (triple click or more)
             
             if (calibrating == true){
@@ -345,9 +364,9 @@ void checkVoltage() {                   //voltage from 255 to 0; 46 is (approx)5
 
 void flashLEDSlow(int times) {
   for (int i = 0; i < times; i++){
-    _delay_ms(100);
+    _delay_ms(70);
     digitalWrite(0, LOW);
-    _delay_ms(100);
+    _delay_ms(70);
     digitalWrite(0, HIGH);
   }
 }
