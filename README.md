@@ -1,10 +1,10 @@
 # miniMO
-8-bit Programmable Synthesizer Module </br>
+Programmable mini Synthesizer Module </br>
 
-http://minimosynth.com/
+https://minimosynth.com/
 
-new forum! see here:
+we've got a forum! 
 
-http://www.minimosynth.com/forum/
+https://www.minimosynth.com/forum/
 
 
