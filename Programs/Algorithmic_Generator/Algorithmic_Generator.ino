@@ -115,7 +115,7 @@ void setup() {
   sei();                               // Interrupts ON (enable interrupts globally)
   
   //go for it!
-  initializeAlgoParameters(0);
+  initializeAlgoParameters(currentAlgo);
   digitalWrite(0, HIGH);               // turn LED ON
 
 }
