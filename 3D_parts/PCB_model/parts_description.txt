@@ -35,3 +35,18 @@ PCB MODEL
 		*hex_legs_stabilizer: locks the legs' rotation
 	
 			Settings: head diameter 0.4 mm, layer height 0.2 mm, default speed 50 mm/s
+			
+	/Tools
+	
+	Parts that help with PCB soldering. The resistor tool allows you to bend the legs to the right measures  
+	
+		*circuit_placement_jig.stl
+			
+			Keeps everything in place while soldering
+			Settings: layer height 0.2 mm; print with two perimeters and fairly solid infill 
+			
+		*resistor_bend_tool.stl
+		
+			Bends the resistors' legs to match the PCB's distance
+			
+			
